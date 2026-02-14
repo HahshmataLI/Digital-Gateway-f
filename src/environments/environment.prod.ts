@@ -1,6 +1,6 @@
 export const environment = {
-  production: true,
-  apiUrl: 'https://digital-gateway-b.onrender.com',
+  production: false,
+  apiUrl: 'https://digital-gateway-b.onrender.com/api',
   allowedRoles: {
     admin: ['admin'],
     counselor: ['admin', 'counselor'],
