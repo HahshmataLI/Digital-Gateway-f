@@ -1,0 +1,177 @@
+<div class="p-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Course Management</h1>
+    <p class="text-gray-600">Manage and track all your courses</p>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <p-button 
+          label="Add New Course" 
+          icon="pi pi-plus" 
+          routerLink="/dashboard/courses/new"
+          severity="success">
+        </p-button>
+      </div>
+      
+      <div class="flex flex-col sm:flex-row gap-4">
+        <form [formGroup]="filterForm" class="flex flex-col sm:flex-row gap-4 items-center">
+          <!-- Status Filter -->
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">Status:</span>
+            <p-select 
+              formControlName="isActive" 
+              [options]="statusOptions" 
+              placeholder="All Status"
+              styleClass="w-40">
+            </p-select>
+          </div>
+          
+          <!-- Duration Filter -->
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">Duration:</span>
+            <p-select 
+              formControlName="duration" 
+              [options]="durationOptions" 
+              placeholder="All Durations"
+              styleClass="w-40">
+            </p-select>
+          </div>
+          
+          <!-- Search -->
+          <span class="p-input-icon-left">
+            <!-- <i class="pi pi-search"></i> -->
+            <input 
+            pInputText 
+            formControlName="search" 
+            placeholder="Search courses..."
+            class="w-full">
+          </span>
+          
+          <!-- Clear Filters -->
+          <p-button 
+            label="Clear" 
+            severity="secondary" 
+            (click)="clearFilters()"
+            [disabled]="!filterForm.dirty">
+          </p-button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading courses...</p>
+  </div>
+
+  <!-- Courses Table -->
+  <div *ngIf="!loading" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <p-table 
+      [value]="courses" 
+      [paginator]="true" 
+      [rows]="rowsPerPage"
+      [totalRecords]="totalRecords"
+      [rowsPerPageOptions]="[5, 10, 25]"
+      [lazy]="true"
+      (onPage)="onPageChange($event)"
+      styleClass="p-datatable-sm">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Code</th>
+          <th>Course Name</th>
+          <th>Duration</th>
+          <th>Fees</th>
+          <th>Curriculum Topics</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-course>
+        <tr class="cursor-pointer hover:bg-gray-50" (click)="viewCourse(course._id)">
+          <td>
+            <span class="font-mono font-bold text-blue-600">{{ course.code }}</span>
+          </td>
+          <td>
+            <div class="flex flex-col">
+              <span class="font-medium">{{ course.name }}</span>
+              <span class="text-xs text-gray-500 line-clamp-2">{{ course.description }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="text-sm">{{ course.duration }}</span>
+          </td>
+          <td>
+            <span class="font-medium">Rs {{ course.fees | number }}</span>
+          </td>
+          <td>
+            <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">
+              {{ (course.curriculum?.length || 0) }} topics
+            </span>
+          </td>
+          <td>
+            <p-tag 
+              [value]="course.isActive ? 'Active' : 'Inactive'"
+              [severity]="course.isActive ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+          <td>
+            <div class="flex space-x-2" (click)="$event.stopPropagation()">
+              <p-button 
+                icon="pi pi-pencil" 
+                severity="info" 
+                text 
+                rounded
+                [routerLink]="['/dashboard/courses/edit', course._id]"
+                pTooltip="Edit Course">
+              </p-button>
+              
+              <p-button 
+                icon="pi pi-eye" 
+                severity="secondary" 
+                text 
+                rounded
+                [routerLink]="['/dashboard/courses', course._id]"
+                pTooltip="View Details">
+              </p-button>
+              
+              <p-button 
+                icon="pi pi-trash" 
+                severity="danger" 
+                text 
+                rounded
+                (click)="deleteCourse(course._id)"
+                pTooltip="Delete Course">
+              </p-button>
+
+              <p-button 
+                [icon]="course.isActive ? 'pi pi-ban' : 'pi pi-check'" 
+                [severity]="course.isActive ? 'warn' : 'success'" 
+                text 
+                rounded
+                (click)="toggleCourseStatus(course)"
+                pTooltip="{{ course.isActive ? 'Deactivate Course' : 'Activate Course' }}">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center py-8 text-gray-500">
+            <i class="pi pi-book text-3xl mb-2 block"></i>
+            <p>No courses found. Add your first course!</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Remove the dialog since you have the toggleCourseStatus confirmation dialog in your component -->
+</div>

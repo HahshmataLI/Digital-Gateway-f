@@ -1,0 +1,203 @@
+<div class="p-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Leads Management</h1>
+    <p class="text-gray-600">Manage and track all your leads</p>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <p-button 
+          label="Add New Lead" 
+          icon="pi pi-plus" 
+          routerLink="/dashboard/leads/new"
+          severity="success">
+        </p-button>
+      </div>
+      
+      <div class="flex flex-col sm:flex-row gap-4">
+        <form [formGroup]="filterForm" class="flex flex-col sm:flex-row gap-4 items-center">
+          <!-- Status Filter -->
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">Status:</span>
+            <p-select 
+              formControlName="status" 
+              [options]="statusOptions" 
+              placeholder="All Status"
+              styleClass="w-40">
+            </p-select>
+          </div>
+          
+          <!-- Source Filter -->
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">Source:</span>
+            <p-select 
+              formControlName="source" 
+              [options]="sourceOptions" 
+              placeholder="All Sources"
+              styleClass="w-40">
+            </p-select>
+          </div>
+          
+          <!-- Search -->
+          <span class="p-input-icon-left">
+            <input 
+            pInputText 
+            formControlName="search" 
+            placeholder="Search leads..."
+            class="w-full">
+          </span>
+          <!-- <i class="pi pi-search"></i> -->
+          
+          <!-- Clear Filters -->
+          <p-button 
+            label="Clear" 
+            severity="secondary" 
+            (click)="clearFilters()"
+            [disabled]="!filterForm.dirty">
+          </p-button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading leads...</p>
+  </div>
+
+  <!-- Leads Table -->
+  <div *ngIf="!loading" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <p-table 
+      [value]="leads" 
+      [paginator]="true" 
+      [rows]="rowsPerPage"
+      [totalRecords]="totalLeads"
+      [rowsPerPageOptions]="[5, 10, 25]"
+      [lazy]="true"
+      (onPage)="onPageChange($event)"
+      styleClass="p-datatable-sm">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Source</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-lead>
+        <tr class="cursor-pointer hover:bg-gray-50" (click)="navigateToDetail(lead)">
+          <td class="font-medium">{{ lead.name }}</td>
+          <td>
+            <div class="flex flex-col">
+              <span class="text-sm">{{ lead.email }}</span>
+              <span class="text-xs text-gray-500">{{ lead.phone }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+              {{ getSourceLabel(lead.source) }}
+            </span>
+          </td>
+          <td>
+            <p-tag 
+              [value]="getStatusLabel(lead.status)"
+              [severity]="getStatusSeverity(lead.status)">
+            </p-tag>
+          </td>
+          <td>
+            <span class="text-sm text-gray-600">
+              {{ lead.createdAt | date:'shortDate' }}
+            </span>
+          </td>
+          <td>
+            <div class="flex space-x-2" (click)="$event.stopPropagation()">
+           <p-button 
+      icon="pi pi-pencil" 
+      severity="info" 
+      text 
+      rounded
+      [routerLink]="['/dashboard/leads', lead._id, 'edit']"
+      tooltip="Edit Lead">
+    </p-button>
+    
+
+              
+              <p-button 
+                icon="pi pi-eye" 
+                severity="secondary" 
+                text 
+                rounded
+                [routerLink]="['/dashboard/leads', lead._id]"
+                tooltip="View Details">
+              </p-button>
+              
+              <p-button 
+                *ngIf="isAdmin()"
+                icon="pi pi-trash" 
+                severity="danger" 
+                text 
+                rounded
+                (click)="deleteLead(lead)"
+                tooltip="Delete Lead">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center py-8 text-gray-500">
+            <i class="pi pi-inbox text-3xl mb-2 block"></i>
+            <p>No leads found. Add your first lead!</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Status Update Dialog -->
+  <p-dialog 
+    [(visible)]="showStatusDialog" 
+    header="Update Lead Status" 
+    [modal]="true"
+    styleClass="w-full md:w-6 lg:w-4">
+    
+    <div class="space-y-4" *ngIf="selectedLeadForStatus">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Current Status</label>
+        <p>{{ getStatusLabel(selectedLeadForStatus.status) }}</p>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">New Status</label>
+        <p-select 
+          [(ngModel)]="newStatus" 
+          [options]="statusOptions" 
+          styleClass="w-full">
+        </p-select>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Cancel" 
+        severity="secondary" 
+        (click)="showStatusDialog = false">
+      </p-button>
+      <p-button 
+        label="Update" 
+        (click)="updateLeadStatus()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+
+</div>

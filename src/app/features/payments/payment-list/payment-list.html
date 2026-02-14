@@ -1,0 +1,259 @@
+<div class="p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Payment Management</h1>
+    <p class="text-gray-600">Track and manage all payment transactions</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Total Revenue</p>
+          <p class="text-2xl font-bold text-green-600">Rs {{ stats.totalAmount | number }}</p>
+        </div>
+        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+          <i class="pi pi-wallet text-green-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Today's Collection</p>
+          <p class="text-2xl font-bold text-blue-600">Rs {{ stats.todayAmount | number }}</p>
+        </div>
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <i class="pi pi-calendar text-blue-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Total Transactions</p>
+          <p class="text-2xl font-bold text-gray-800">{{ stats.totalCount || 0 }}</p>
+        </div>
+        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+          <i class="pi pi-credit-card text-purple-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Average Payment</p>
+          <p class="text-2xl font-bold text-orange-600">Rs {{ stats.avgAmount | number }}</p>
+        </div>
+        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+          <i class="pi pi-chart-line text-orange-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <p-button 
+          label="Export Report" 
+          icon="pi pi-download" 
+          severity="secondary"
+          (click)="exportReport()">
+        </p-button>
+      </div>
+      
+      <div class="flex flex-col sm:flex-row gap-4">
+        <form [formGroup]="filterForm" class="flex flex-col sm:flex-row gap-4 items-center">
+          <!-- Date Range -->
+          <div class="flex items-center space-x-2">
+            <p-datePicker 
+              formControlName="startDate"
+              placeholder="Start Date"
+              [showIcon]="true"
+              styleClass="w-36">
+            </p-datePicker>
+            <span class="text-gray-500">-</span>
+            <p-datePicker 
+              formControlName="endDate"
+              placeholder="End Date"
+              [showIcon]="true"
+              styleClass="w-36">
+            </p-datePicker>
+          </div>
+          
+          <!-- Payment Mode Filter -->
+          <p-select 
+            formControlName="paymentMode" 
+            [options]="paymentModeOptions" 
+            placeholder="All Modes"
+            [showClear]="true"
+            styleClass="w-40">
+          </p-select>
+          
+          <!-- Status Filter -->
+          <p-select 
+            formControlName="status" 
+            [options]="statusOptions" 
+            placeholder="All Status"
+            [showClear]="true"
+            styleClass="w-40">
+          </p-select>
+          
+          <!-- Search -->
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              formControlName="search" 
+              placeholder="Search by receipt #, name..."
+              class="w-48">
+          </span>
+          
+          <!-- Clear Filters -->
+          <p-button 
+            label="Clear" 
+            severity="secondary" 
+            (click)="clearFilters()"
+            [disabled]="!filterForm.dirty">
+          </p-button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading payments...</p>
+  </div>
+
+  <!-- Payments Table -->
+  <div *ngIf="!loading" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <p-table 
+      [value]="payments" 
+      [paginator]="true" 
+      [rows]="rowsPerPage"
+      [totalRecords]="totalRecords"
+      [rowsPerPageOptions]="[10, 25, 50, 100]"
+      [lazy]="true"
+      (onPage)="onPageChange($event)"
+      (onSort)="onSort($event)"
+      styleClass="p-datatable-sm">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="paymentNumber">
+            Receipt # <p-sortIcon field="paymentNumber"></p-sortIcon>
+          </th>
+          <th pSortableColumn="student.name">
+            Student <p-sortIcon field="student.name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="paymentDate">
+            Date <p-sortIcon field="paymentDate"></p-sortIcon>
+          </th>
+          <th>Course</th>
+          <th>Payment Mode</th>
+          <th pSortableColumn="amount">
+            Amount <p-sortIcon field="amount"></p-sortIcon>
+          </th>
+          <th>Status</th>
+          <th>Received By</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-payment>
+        <tr class="cursor-pointer hover:bg-gray-50" (click)="viewPayment(payment._id)">
+          <td>
+            <span class="font-mono font-bold text-blue-600">{{ payment.receiptNumber || payment.paymentNumber }}</span>
+          </td>
+          <td>
+            <div class="flex flex-col">
+              <span class="font-medium">{{ payment.enrollment?.student?.name }}</span>
+              <span class="text-xs text-gray-500">{{ payment.enrollment?.student?.email }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="text-sm">{{ payment.paymentDate | date:'mediumDate' }}</span>
+          </td>
+          <td>
+            <span class="text-sm">{{ payment.enrollment?.course?.name || payment.enrollment?.course?.code }}</span>
+          </td>
+          <td>
+            <span class="px-2 py-1 bg-gray-100 rounded-full text-xs">
+              <i [class]="getPaymentModeIcon(payment.paymentMode)"></i>
+              {{ payment.paymentMode | titlecase }}
+            </span>
+          </td>
+          <td>
+            <span class="font-medium">Rs {{ payment.amount | number }}</span>
+          </td>
+          <td>
+            <p-tag 
+              [value]="payment.status | titlecase"
+              [severity]="getStatusSeverity(payment.status)">
+            </p-tag>
+          </td>
+          <td>
+            <span class="text-sm">{{ payment.receivedBy?.name }}</span>
+          </td>
+          <td>
+            <div class="flex space-x-2" (click)="$event.stopPropagation()">
+              <p-button 
+                icon="pi pi-print" 
+                severity="info" 
+                text 
+                rounded
+                (click)="printReceipt(payment._id)"
+                pTooltip="Print Receipt">
+              </p-button>
+              <p-button 
+                icon="pi pi-eye" 
+                severity="secondary" 
+                text 
+                rounded
+                [routerLink]="['/dashboard/payments', payment._id]"
+                pTooltip="View Details">
+              </p-button>
+              <p-button 
+                *ngIf="payment.status === 'failed' || payment.status === 'pending'"
+                icon="pi pi-refresh" 
+                severity="success" 
+                text 
+                rounded
+                (click)="retryPayment(payment)"
+                pTooltip="Retry Payment">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="text-center py-8 text-gray-500">
+            <i class="pi pi-credit-card text-3xl mb-2 block"></i>
+            <p>No payments found</p>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="summary">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-600">
+            Total <span class="font-bold">{{ totalRecords }}</span> payments
+          </span>
+          <span class="text-sm font-bold text-green-600">
+            Total Amount: Rs {{ stats.totalAmount | number }}
+          </span>
+        </div>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

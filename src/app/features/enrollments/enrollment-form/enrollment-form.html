@@ -1,0 +1,359 @@
+<div class="p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-4">
+      <button pButton 
+              icon="pi pi-arrow-left" 
+              class="p-button-text"
+              (click)="cancel()"
+              pTooltip="Back to Enrollments">
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">
+          {{ isEditMode ? 'Edit Enrollment' : isFromLead ? 'Convert Lead to Enrollment' : 'Create New Enrollment' }}
+        </h1>
+        <p class="text-gray-600">
+          {{ isEditMode ? 'Update enrollment details and fee information' : 
+             isFromLead ? 'Enroll this lead into a course and create student record' : 
+             'Enroll a new student into a course' }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading enrollment form...</p>
+  </div>
+
+  <!-- Enrollment Form -->
+  <div *ngIf="!loading" class="space-y-6">
+    <p-card>
+      <form [formGroup]="enrollmentForm" class="space-y-8">
+        
+        <!-- Student Information Section -->
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="pi pi-user mr-2 text-primary-500"></i>
+            Student Information
+          </h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Full Name -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Full Name *
+              </label>
+              <input pInputText 
+                     formControlName="studentName"
+                     placeholder="Enter student's full name"
+                     [class.p-invalid]="isFieldInvalid('studentName')"
+                     class="w-full">
+              <small *ngIf="isFieldInvalid('studentName')" class="p-error block">
+                Student name is required
+              </small>
+            </div>
+
+            <!-- Email -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Email Address *
+              </label>
+              <input pInputText 
+                     formControlName="studentEmail"
+                     placeholder="student@example.com"
+                     [class.p-invalid]="isFieldInvalid('studentEmail')"
+                     class="w-full">
+              <small *ngIf="isFieldInvalid('studentEmail')" class="p-error block">
+                <span *ngIf="enrollmentForm.get('studentEmail')?.errors?.['required']">Email is required</span>
+                <span *ngIf="enrollmentForm.get('studentEmail')?.errors?.['email']">Invalid email format</span>
+              </small>
+            </div>
+
+            <!-- Phone Number -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Phone Number *
+              </label>
+              <input pInputText 
+                     formControlName="studentPhone"
+                     placeholder="03XX-XXXXXXX"
+                     [class.p-invalid]="isFieldInvalid('studentPhone')"
+                     class="w-full">
+              <small *ngIf="isFieldInvalid('studentPhone')" class="p-error block">
+                Valid phone number is required
+              </small>
+            </div>
+
+            <!-- Qualification -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Highest Qualification *
+              </label>
+              <p-select 
+                formControlName="studentQualification"
+                [options]="qualificationOptions"
+                placeholder="Select qualification"
+                [class.p-invalid]="isFieldInvalid('studentQualification')"
+                styleClass="w-full">
+              </p-select>
+              <small *ngIf="isFieldInvalid('studentQualification')" class="p-error block">
+                Qualification is required
+              </small>
+            </div>
+
+            <!-- Occupation -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Occupation
+              </label>
+              <input pInputText 
+                     formControlName="studentOccupation"
+                     placeholder="e.g., Student, Software Engineer"
+                     class="w-full">
+            </div>
+
+            <!-- Address -->
+            <div class="space-y-2 md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Address *
+              </label>
+              <textarea pInputTextarea 
+                        formControlName="studentAddress"
+                        rows="2"
+                        placeholder="Enter complete address"
+                        [class.p-invalid]="isFieldInvalid('studentAddress')"
+                        class="w-full">
+              </textarea>
+              <small *ngIf="isFieldInvalid('studentAddress')" class="p-error block">
+                Address is required
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course & Batch Selection Section -->
+        <div class="border-t border-gray-200 pt-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="pi pi-book mr-2 text-primary-500"></i>
+            Course & Batch Selection
+          </h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Course Selection -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Select Course *
+              </label>
+              <p-select 
+                formControlName="course"
+                [options]="courseOptions"
+                placeholder="Choose a course"
+                [loading]="loadingCourses"
+                [filter]="true"
+                filterBy="label"
+                [showClear]="true"
+                [class.p-invalid]="isFieldInvalid('course')"
+                styleClass="w-full"
+                (onChange)="onCourseChange()">
+              </p-select>
+              <small *ngIf="isFieldInvalid('course')" class="p-error block">
+                Course selection is required
+              </small>
+              <small *ngIf="selectedCourse" class="text-green-600 block">
+                <i class="pi pi-tag mr-1"></i>
+                Fee: Rs {{ selectedCourse.fees | number }}
+              </small>
+            </div>
+
+            <!-- Batch Selection -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Select Batch
+              </label>
+              <p-select 
+                formControlName="batch"
+                [options]="batchOptions"
+                placeholder="Choose a batch (optional)"
+                [loading]="loadingBatches"
+                [filter]="true"
+                filterBy="label"
+                [showClear]="true"
+                styleClass="w-full"
+                (onChange)="onBatchChange()">
+              </p-select>
+              <small *ngIf="selectedBatch" class="text-blue-600 block">
+                <i class="pi pi-users mr-1"></i>
+                {{ selectedBatch.capacity.available }} seats available
+              </small>
+              <small *ngIf="!selectedCourse" class="text-gray-500 block">
+                Select a course first to see available batches
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fee Details Section -->
+        <div class="border-t border-gray-200 pt-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="pi pi-wallet mr-2 text-primary-500"></i>
+            Fee Details
+          </h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Course Fee (Read-only) -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Course Fee
+              </label>
+              <p-inputNumber 
+                formControlName="courseFee"
+                mode="currency" 
+                currency="PKR"
+                [readonly]="true"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+
+            <!-- Discount -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Discount
+              </label>
+              <div class="flex items-center space-x-2">
+                <p-inputNumber 
+                  formControlName="discount"
+                  [min]="0"
+                  [max]="selectedCourse?.fees || 0"
+                  mode="currency" 
+                  currency="PKR"
+                  [class.p-invalid]="isFieldInvalid('discount')"
+                  class="w-full">
+                </p-inputNumber>
+                <span class="text-sm text-gray-500">-</span>
+              </div>
+              <small *ngIf="isFieldInvalid('discount')" class="p-error block">
+                Discount cannot exceed course fee
+              </small>
+            </div>
+
+            <!-- Final Amount -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Final Amount
+              </label>
+              <p-inputNumber 
+                formControlName="finalAmount"
+                mode="currency" 
+                currency="PKR"
+                [readonly]="true"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+
+            <!-- Initial Payment -->
+            <div class="space-y-2 md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Initial Payment Amount
+              </label>
+              <p-inputNumber 
+                formControlName="paidAmount"
+                [min]="0"
+                [max]="finalAmount"
+                mode="currency" 
+                currency="PKR"
+                [class.p-invalid]="isFieldInvalid('paidAmount')"
+                class="w-full">
+              </p-inputNumber>
+              <small *ngIf="isFieldInvalid('paidAmount')" class="p-error block">
+                Payment cannot exceed final amount
+              </small>
+              <small class="text-gray-500">
+                <i class="pi pi-info-circle mr-1"></i>
+                Enter 0 for pending payment
+              </small>
+            </div>
+
+            <!-- Due Amount (Read-only) -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Due Amount
+              </label>
+              <p-inputNumber 
+                [ngModel]="dueAmount"
+                [ngModelOptions]="{standalone: true}"
+                mode="currency" 
+                currency="PKR"
+                [readonly]="true"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <!-- Payment Status Summary -->
+          <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">Payment Status:</span>
+              <p-tag 
+                [value]="getPaymentStatus()"
+                [severity]="getPaymentStatusSeverity(getPaymentStatus())">
+              </p-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="border-t border-gray-200 pt-6">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              Additional Notes
+            </label>
+            <textarea pInputTextarea 
+                      formControlName="notes"
+                      rows="3"
+                      placeholder="Any additional information about this enrollment..."
+                      class="w-full">
+            </textarea>
+          </div>
+        </div>
+
+        <!-- Lead Information (Hidden when not from lead) -->
+        <div *ngIf="isFromLead && leadData" class="border-t border-gray-200 pt-6">
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <div class="flex items-start space-x-3">
+              <i class="pi pi-info-circle text-blue-600 mt-1"></i>
+              <div>
+                <p class="font-medium text-blue-800">Converting Lead to Enrollment</p>
+                <p class="text-sm text-blue-600 mt-1">
+                  Lead: {{ leadData.name }} ({{ leadData.email }}) - Source: {{ leadData.source }}
+                </p>
+                <p class="text-sm text-blue-600">
+                  Lead status will be automatically updated to 'Converted'
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </p-card>
+
+    <!-- Form Actions -->
+    <div class="flex justify-end space-x-3">
+      <p-button 
+        label="Cancel" 
+        icon="pi pi-times" 
+        severity="secondary"
+        (click)="cancel()">
+      </p-button>
+      <p-button 
+        [label]="isEditMode ? 'Update Enrollment' : 'Create Enrollment'"
+        [icon]="isEditMode ? 'pi pi-save' : 'pi pi-user-plus'"
+        (click)="onSubmit()"
+        [loading]="submitting"
+        [disabled]="enrollmentForm.invalid">
+      </p-button>
+    </div>
+  </div>
+</div>

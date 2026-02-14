@@ -1,0 +1,206 @@
+<div class="p-6">
+  <!-- Header with Back Button -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-4">
+      <button pButton 
+              icon="pi pi-arrow-left" 
+              class="p-button-text"
+              (click)="goBack()"
+              pTooltip="Back to Payments">
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Payment Details</h1>
+        <p class="text-gray-600">{{ payment?.receiptNumber || payment?.paymentNumber }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading payment details...</p>
+  </div>
+
+  <!-- Payment Details -->
+  <div *ngIf="!loading && payment" class="space-y-6">
+    <!-- Status Bar -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <p-tag 
+            [value]="payment.status | titlecase"
+            [severity]="getStatusSeverity(payment.status)"
+            styleClass="text-sm px-3 py-1">
+          </p-tag>
+          <span class="text-sm text-gray-600">
+            <i class="pi pi-calendar mr-1"></i>
+            {{ payment.paymentDate | date:'fullDate' }}
+          </span>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+          <p-button 
+            label="Print Receipt" 
+            icon="pi pi-print" 
+            severity="info"
+            (click)="printReceipt()">
+          </p-button>
+     <!-- Change severity="warning" to severity="warn" -->
+<p-button 
+  *ngIf="payment.status === 'success'"
+  label="Refund" 
+  icon="pi pi-undo" 
+  severity="warn"  
+  class="p-button-outlined"
+  (click)="refundPayment()">
+</p-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment & Student Information -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Payment Details Card -->
+      <div class="lg:col-span-2">
+        <p-card header="Payment Information">
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm text-gray-500">Payment Number</label>
+                <p class="font-mono font-medium">{{ payment.paymentNumber }}</p>
+              </div>
+              <div>
+                <label class="text-sm text-gray-500">Receipt Number</label>
+                <p class="font-mono font-medium">{{ payment.receiptNumber || 'Not generated' }}</p>
+              </div>
+              <div>
+                <label class="text-sm text-gray-500">Payment Mode</label>
+                <div class="flex items-center space-x-2 mt-1">
+                  <span class="px-2 py-1 bg-gray-100 rounded-full text-xs">
+                    <i [class]="getPaymentModeIcon(payment.paymentMode)"></i>
+                    {{ payment.paymentMode | titlecase }}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label class="text-sm text-gray-500">Amount</label>
+                <p class="text-xl font-bold text-green-600">Rs {{ payment.amount | number }}</p>
+              </div>
+            </div>
+
+            <!-- Transaction Details -->
+            <div *ngIf="payment.transactionDetails" class="border-t border-gray-200 pt-4">
+              <h3 class="font-medium text-gray-700 mb-3">Transaction Details</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ng-container *ngIf="payment.transactionDetails.reference">
+                  <div>
+                    <label class="text-sm text-gray-500">Transaction Reference</label>
+                    <p class="font-mono text-sm">{{ payment.transactionDetails.reference }}</p>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="payment.transactionDetails.bankName">
+                  <div>
+                    <label class="text-sm text-gray-500">Bank Name</label>
+                    <p>{{ payment.transactionDetails.bankName }}</p>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="payment.transactionDetails.cardLastFour">
+                  <div>
+                    <label class="text-sm text-gray-500">Card Number</label>
+                    <p>**** **** **** {{ payment.transactionDetails.cardLastFour }}</p>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="payment.transactionDetails.upiId">
+                  <div>
+                    <label class="text-sm text-gray-500">UPI ID</label>
+                    <p>{{ payment.transactionDetails.upiId }}</p>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="payment.transactionDetails.chequeNumber">
+                  <div>
+                    <label class="text-sm text-gray-500">Cheque Number</label>
+                    <p>{{ payment.transactionDetails.chequeNumber }}</p>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="payment.transactionDetails.chequeDate">
+                  <div>
+                    <label class="text-sm text-gray-500">Cheque Date</label>
+                    <p>{{ payment.transactionDetails.chequeDate | date }}</p>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+
+            <!-- Remarks -->
+            <div *ngIf="payment.remarks" class="border-t border-gray-200 pt-4">
+              <label class="text-sm text-gray-500">Remarks</label>
+              <p class="text-gray-700">{{ payment.remarks }}</p>
+            </div>
+
+            <!-- Audit Info -->
+            <div class="border-t border-gray-200 pt-4">
+              <div class="flex justify-between text-sm text-gray-500">
+                <span>Received By: <span class="font-medium">{{ payment.receivedBy?.name }}</span></span>
+                <span>Recorded: {{ payment.createdAt | date:'medium' }}</span>
+              </div>
+            </div>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Student & Enrollment Card -->
+      <div>
+        <p-card header="Student Information">
+          <div class="space-y-4">
+            <div class="text-center py-2">
+              <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto">
+                <i class="pi pi-user text-primary-600 text-2xl"></i>
+              </div>
+              <h3 class="font-medium text-gray-800 mt-2">{{ payment.enrollment?.student?.name }}</h3>
+              <p class="text-sm text-gray-600">{{ payment.enrollment?.student?.email }}</p>
+              <p class="text-sm text-gray-600">{{ payment.enrollment?.student?.phone }}</p>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Course</span>
+                  <span class="text-sm font-medium">{{ payment.enrollment?.course?.name }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Enrollment #</span>
+                  <span class="text-sm font-mono text-blue-600 cursor-pointer" 
+                        (click)="viewEnrollment(payment.enrollment._id)">
+                    {{ payment.enrollment?.enrollmentNumber }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Payment Status</span>
+                  <p-tag 
+                    [value]="payment.enrollment?.fees?.paymentStatus | titlecase"
+                    [severity]="getPaymentStatusSeverity(payment.enrollment?.fees?.paymentStatus)">
+                  </p-tag>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Due Amount</span>
+                  <span class="text-sm font-bold text-red-600">
+                    Rs {{ payment.enrollment?.fees?.dueAmount | number }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+              <p-button 
+                label="View Enrollment" 
+                icon="pi pi-external-link"
+                styleClass="p-button-outlined w-full"
+                (click)="viewEnrollment(payment.enrollment._id)">
+              </p-button>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+</div>

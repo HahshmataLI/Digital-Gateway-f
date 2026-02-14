@@ -1,0 +1,293 @@
+<div class="p-6">
+  <!-- Header with Back Button -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-4">
+      <button pButton 
+              icon="pi pi-arrow-left" 
+              class="p-button-text"
+              (click)="goBack()"
+              pTooltip="Back to Enrollments">
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Enrollment Details</h1>
+        <p class="text-gray-600">{{ enrollment?.enrollmentNumber }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading enrollment details...</p>
+  </div>
+
+  <!-- Enrollment Details -->
+  <div *ngIf="!loading && enrollment" class="space-y-6">
+    <!-- Status Bar -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <p-tag 
+            [value]="enrollment.enrollmentStatus | titlecase"
+            [severity]="getStatusSeverity(enrollment.enrollmentStatus)"
+            styleClass="text-sm px-3 py-1">
+          </p-tag>
+          <p-tag 
+            [value]="enrollment.fees.paymentStatus | titlecase"
+            [severity]="getPaymentStatusSeverity(enrollment.fees.paymentStatus)"
+            styleClass="text-sm px-3 py-1">
+          </p-tag>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+          <p-button 
+            label="Edit Enrollment" 
+            icon="pi pi-pencil" 
+            [routerLink]="['/dashboard/enrollments/edit', enrollment._id]"
+            severity="info">
+          </p-button>
+          <p-button 
+            *ngIf="enrollment.fees.dueAmount > 0"
+            label="Add Payment" 
+            icon="pi pi-credit-card" 
+            [routerLink]="['/dashboard/payments/new', enrollment._id]"
+            severity="success">
+          </p-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Information -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Student Details Card -->
+      <div class="lg:col-span-2">
+        <p-card header="Student Information">
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm text-gray-500">Full Name</label>
+                <p class="font-medium">{{ enrollment.student.name }}</p>
+              </div>
+              <div>
+                <label class="text-sm text-gray-500">Email Address</label>
+                <p class="font-medium">{{ enrollment.student.email }}</p>
+              </div>
+              <div>
+                <label class="text-sm text-gray-500">Phone Number</label>
+                <p class="font-medium">{{ enrollment.student.phone }}</p>
+              </div>
+              <div>
+                <label class="text-sm text-gray-500">Qualification</label>
+                <p class="font-medium">{{ enrollment.student.qualification }}</p>
+              </div>
+            </div>
+            
+            <div>
+              <label class="text-sm text-gray-500">Address</label>
+              <p class="font-medium">{{ enrollment.student.address }}</p>
+            </div>
+            
+            <div *ngIf="enrollment.student.occupation">
+              <label class="text-sm text-gray-500">Occupation</label>
+              <p class="font-medium">{{ enrollment.student.occupation }}</p>
+            </div>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Enrollment Summary Card -->
+      <div>
+        <p-card header="Enrollment Summary">
+          <div class="space-y-4">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Enrollment Date</span>
+              <span class="font-medium">{{ enrollment.enrollmentDate | date:'mediumDate' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Course</span>
+              <span class="font-medium">{{ enrollment.course?.name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Batch</span>
+              <span *ngIf="enrollment.batch" class="font-medium">{{ enrollment.batch.name }}</span>
+              <span *ngIf="!enrollment.batch" class="text-gray-400">Not Assigned</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Enrolled By</span>
+              <span class="font-medium">{{ enrollment.enrolledBy?.name }}</span>
+            </div>
+            <div *ngIf="enrollment.lead" class="flex justify-between">
+              <span class="text-gray-600">Source Lead</span>
+              <span class="font-medium text-blue-600 cursor-pointer" 
+                    (click)="viewLead(enrollment.lead)">
+                View Lead
+              </span>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+
+    <!-- Fee & Payment Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Fee Breakdown -->
+      <div class="lg:col-span-2">
+        <p-card header="Fee Details">
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Course Fee</span>
+              <span class="font-medium">Rs {{ enrollment.fees.total | number }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Discount</span>
+              <span class="font-medium text-green-600">- Rs {{ enrollment.fees.discount | number }}</span>
+            </div>
+            <div class="border-t border-gray-200 my-2"></div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-800 font-semibold">Final Amount</span>
+              <span class="text-lg font-bold text-gray-900">Rs {{ enrollment.fees.finalAmount | number }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Paid Amount</span>
+              <span class="font-medium text-green-600">Rs {{ enrollment.fees.paidAmount | number }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Due Amount</span>
+              <span [class]="enrollment.fees.dueAmount > 0 ? 'font-medium text-red-600' : 'font-medium text-green-600'">
+                Rs {{ enrollment.fees.dueAmount | number }}
+              </span>
+            </div>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Payment Status Card -->
+      <div>
+        <p-card header="Payment Status">
+          <div class="space-y-4">
+            <div class="text-center py-2">
+              <div class="text-3xl font-bold mb-2">
+                {{ enrollment.fees.paidAmount / enrollment.fees.finalAmount | percent:'1.0-0' }}
+              </div>
+              <p-progressBar 
+                [value]="(enrollment.fees.paidAmount / enrollment.fees.finalAmount) * 100"
+                [showValue]="false"
+                styleClass="h-2">
+              </p-progressBar>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Payment Status</span>
+                <p-tag 
+                  [value]="enrollment.fees.paymentStatus | titlecase"
+                  [severity]="getPaymentStatusSeverity(enrollment.fees.paymentStatus)">
+                </p-tag>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Total Payments</span>
+                <span class="font-medium">{{ payments.length || 0 }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Last Payment</span>
+                <span class="font-medium">{{ getLastPaymentDate() | date:'mediumDate' }}</span>
+              </div>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+
+    <!-- Batch & Schedule -->
+    <div *ngIf="enrollment.batch" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-3">
+        <p-card header="Batch & Schedule">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="text-sm text-gray-500">Batch Name</label>
+              <p class="font-medium">{{ enrollment.batch.name }}</p>
+            </div>
+            <div>
+              <label class="text-sm text-gray-500">Trainer</label>
+              <p class="font-medium">{{ enrollment.batch.trainer?.name }}</p>
+            </div>
+            <div>
+              <label class="text-sm text-gray-500">Schedule</label>
+              <p class="font-medium">
+                {{ enrollment.batch.schedule.days.join(', ') }}
+              </p>
+              <p class="text-sm text-gray-600">
+                {{ enrollment.batch.schedule.startTime }} - {{ enrollment.batch.schedule.endTime }}
+              </p>
+            </div>
+            <div>
+              <label class="text-sm text-gray-500">Duration</label>
+              <p class="font-medium">
+                {{ enrollment.batch.startDate | date:'mediumDate' }} - 
+                {{ enrollment.batch.endDate | date:'mediumDate' }}
+              </p>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div *ngIf="enrollment.notes">
+      <p-card header="Additional Notes">
+        <p class="text-gray-700 whitespace-pre-line">{{ enrollment.notes }}</p>
+      </p-card>
+    </div>
+
+    <!-- Payment History -->
+    <div *ngIf="payments && payments.length > 0">
+      <p-card header="Payment History">
+        <p-table [value]="payments" [paginator]="true" [rows]="5">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Payment #</th>
+              <th>Date</th>
+              <th>Mode</th>
+              <th>Amount</th>
+              <th>Reference</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          
+          <ng-template pTemplate="body" let-payment>
+            <tr>
+              <td>
+                <span class="font-mono text-blue-600">{{ payment.paymentNumber }}</span>
+              </td>
+              <td>{{ payment.paymentDate | date:'mediumDate' }}</td>
+              <td>
+                <span class="px-2 py-1 bg-gray-100 rounded-full text-xs">
+                  {{ payment.paymentMode | titlecase }}
+                </span>
+              </td>
+              <td class="font-medium">Rs {{ payment.amount | number }}</td>
+              <td>
+                <span class="text-sm">{{ payment.transactionDetails?.reference || 'N/A' }}</span>
+              </td>
+              <td>
+                <p-tag 
+                  [value]="payment.status | titlecase"
+                  [severity]="getPaymentStatusSeverity(payment.status)">
+                </p-tag>
+              </td>
+              <td>
+                <p-button 
+                  icon="pi pi-download" 
+                  text 
+                  rounded
+                  pTooltip="Download Receipt">
+                </p-button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+  </div>
+</div>

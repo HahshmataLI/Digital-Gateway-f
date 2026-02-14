@@ -1,0 +1,188 @@
+<div class="p-6">
+  <!-- Header with Back Button -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-4">
+      <button pButton 
+              icon="pi pi-arrow-left" 
+              class="p-button-text"
+              (click)="goBack()"
+              pTooltip="Back to Batches">
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ batch?.name }}</h1>
+        <div class="flex items-center space-x-3 mt-1">
+          <span class="font-mono font-bold text-blue-600">{{ batch?.batchNumber }}</span>
+                <p-tag 
+            *ngIf="batch"
+            [value]="batch.status | titlecase"
+            [severity]="getStatusSeverity(batch.status)"
+            styleClass="text-xs">
+            </p-tag>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading batch details...</p>
+  </div>
+
+  <!-- Batch Details -->
+  <div *ngIf="!loading && batch" class="space-y-6">
+    <!-- Action Bar -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <span class="text-sm text-gray-600">
+            <i class="pi pi-calendar mr-1"></i>
+            {{ batch.startDate | date:'mediumDate' }} - {{ batch.endDate | date:'mediumDate' }}
+          </span>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+          <p-button 
+            label="Mark Attendance" 
+            icon="pi pi-users" 
+            severity="info"
+            [routerLink]="['/dashboard/batches', batchId, 'attendance']">
+          </p-button>
+          <p-button 
+            label="Edit Batch" 
+            icon="pi pi-pencil" 
+            severity="secondary"
+            [routerLink]="['/dashboard/batches/edit', batchId]">
+          </p-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch Information Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Course & Trainer Info -->
+      <div class="lg:col-span-2">
+        <p-card header="Batch Information">
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm text-gray-500">Course</label>
+                <p class="font-medium">{{ batch.course?.name }}</p>
+                <p class="text-sm text-gray-600">{{ batch.course?.code }}</p>
+              </div>
+              <div>
+                <label class="text-sm text-gray-500">Trainer</label>
+                <p class="font-medium">{{ batch.trainer?.name }}</p>
+                <p class="text-sm text-gray-600">{{ batch.trainer?.email }}</p>
+                <p class="text-sm text-gray-600">{{ batch.trainer?.phone }}</p>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+              <label class="text-sm text-gray-500">Schedule</label>
+              <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p class="font-medium">Days</p>
+                  <p class="text-sm">{{ batch.schedule.days.join(', ') }}</p>
+                </div>
+                <div>
+                  <p class="font-medium">Time</p>
+                  <p class="text-sm">{{ batch.schedule.startTime }} - {{ batch.schedule.endTime }}</p>
+                </div>
+                <div>
+                  <p class="font-medium">Format</p>
+                  <p class="text-sm">{{ batch.schedule.format | titlecase }}</p>
+                </div>
+                <div *ngIf="batch.schedule.format === 'offline'">
+                  <p class="font-medium">Room</p>
+                  <p class="text-sm">{{ batch.room || 'Not specified' }}</p>
+                </div>
+                <div *ngIf="batch.schedule.format === 'online'">
+                  <p class="font-medium">Meeting Link</p>
+                  <a [href]="batch.meetingLink" target="_blank" class="text-sm text-blue-600">
+                    {{ batch.meetingLink }}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Capacity Card -->
+      <div>
+        <p-card header="Capacity">
+          <div class="space-y-4">
+            <div class="text-center py-2">
+              <div class="text-3xl font-bold mb-2">
+                {{ batch.capacity.enrolled || 0 }}/{{ batch.capacity.max || 0 }}
+              </div>
+              <p-progressBar 
+                [value]="((batch.capacity.enrolled || 0) / (batch.capacity.max || 1)) * 100" 
+                [showValue]="false"
+                styleClass="h-2">
+              </p-progressBar>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Available Seats</span>
+                <span class="font-bold text-green-600">{{ batch.capacity.available || 0 }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Total Students</span>
+                <span class="font-bold">{{ batch.enrolledStudents?.length || 0 }}</span>
+              </div>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+
+    <!-- Enrolled Students -->
+    <p-card header="Enrolled Students">
+      <p-table [value]="enrolledStudents" [paginator]="true" [rows]="10">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Enrollment #</th>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Enrollment Date</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="body" let-enrollment>
+          <tr>
+            <td>
+              <span class="font-mono text-blue-600">{{ enrollment.enrollmentNumber }}</span>
+            </td>
+            <td class="font-medium">{{ enrollment.student.name }}</td>
+            <td>{{ enrollment.student.email }}</td>
+            <td>{{ enrollment.student.phone }}</td>
+            <td>{{ enrollment.enrollmentDate | date:'mediumDate' }}</td>
+            <td>
+              <p-button 
+                icon="pi pi-eye" 
+                text 
+                rounded
+                [routerLink]="['/dashboard/enrollments', enrollment._id]">
+              </p-button>
+            </td>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-8 text-gray-500">
+              <i class="pi pi-users text-3xl mb-2 block"></i>
+              <p>No students enrolled in this batch</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+</div>

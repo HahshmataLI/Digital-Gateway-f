@@ -1,0 +1,263 @@
+<div class="p-6">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">
+            {{ lead?.name || 'Loading...' }}
+          </h1>
+          <p class="text-gray-600">Lead Details</p>
+        </div>
+        <p-button 
+          label="Back to Leads" 
+          icon="pi pi-arrow-left" 
+          severity="secondary"
+          routerLink="/dashboard/leads">
+        </p-button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-12">
+      <p-progressSpinner></p-progressSpinner>
+      <p class="mt-2 text-gray-600">Loading lead details...</p>
+    </div>
+
+    <!-- Lead Content -->
+    <div *ngIf="!loading && lead" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column - Lead Information -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Basic Information Card -->
+        <p-card header="Basic Information">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Email</p>
+              <p class="font-medium">{{ lead.email }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Phone</p>
+              <p class="font-medium">{{ lead.phone }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Course Interested In</p>
+              <p class="font-medium">{{ lead.courseInterested || 'Not specified' }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Source</p>
+              <p class="font-medium">{{ lead.source | titlecase }}</p>
+            </div>
+            <div class="md:col-span-2">
+              <p class="text-sm text-gray-500 mb-1">Status</p>
+              <div class="flex items-center space-x-4">
+                <p-tag 
+                  [value]="getStatusLabel(lead.status)"
+                  [severity]="getStatusSeverity(lead.status)">
+                </p-tag>
+                
+                <div class="flex items-center space-x-2" *ngIf="isAdminOrCounselor()">
+                  <p-select 
+                    [(ngModel)]="newStatus" 
+                    [options]="statusOptions" 
+                    optionLabel="label"
+                    optionValue="value"
+                    styleClass="w-40">
+                  </p-select>
+                  <p-button 
+                    label="Update" 
+                    size="small"
+                    (click)="updateStatus()">
+                  </p-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </p-card>
+
+        <!-- Notes Card -->
+        <p-card header="Notes" *ngIf="lead.notes">
+          <p class="text-gray-700 whitespace-pre-line">{{ lead.notes }}</p>
+        </p-card>
+
+        <!-- Follow-ups Timeline -->
+        <p-card header="Follow-up History">
+          <div *ngIf="!lead.followUps || lead.followUps.length === 0" class="text-center py-8 text-gray-500">
+            <i class="pi pi-history text-3xl mb-2"></i>
+            <p>No follow-ups recorded</p>
+          </div>
+          
+          <p-timeline [value]="getFollowUpEvents()" *ngIf="lead.followUps && lead.followUps.length > 0" class="mt-4">
+            <ng-template pTemplate="content" let-event>
+              <div class="mb-6 p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-medium text-gray-800">{{ event.status }}</span>
+                  <span class="text-sm text-gray-500">
+                    {{ event.date | date:'mediumDate' }}
+                  </span>
+                </div>
+                <p class="text-gray-700 text-sm">{{ event.note }}</p>
+                <div *ngIf="event.nextDate" class="mt-2">
+                  <span class="text-xs text-blue-600">
+                    <i class="pi pi-clock mr-1"></i>
+                    Next: {{ event.nextDate | date:'medium' }}
+                  </span>
+                </div>
+              </div>
+            </ng-template>
+            
+            <ng-template pTemplate="marker" let-event>
+              <span 
+                [class]="event.icon" 
+                [style]="{color: event.color}"
+                class="text-xl">
+              </span>
+            </ng-template>
+          </p-timeline>
+          
+          <div class="mt-4" *ngIf="isAdminOrCounselor()">
+            <p-button 
+              label="Add Follow-up" 
+              icon="pi pi-plus" 
+              severity="secondary"
+              (click)="openFollowUpDialog()">
+            </p-button>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Right Column - Actions & Metadata -->
+      <div class="space-y-6">
+        <!-- Actions Card -->
+        <p-card header="Actions">
+          <div class="space-y-3">
+            <p-button 
+      label="Edit Lead" 
+      icon="pi pi-pencil" 
+      severity="info"
+      styleClass="w-full justify-start"
+      [routerLink]="['/dashboard/leads', lead._id, 'edit']">
+    </p-button>
+            
+            <p-button 
+              label="Send Email" 
+              icon="pi pi-send" 
+              severity="secondary"
+              styleClass="w-full justify-start">
+            </p-button>
+            
+            <p-button 
+              label="Schedule Call" 
+              icon="pi pi-phone" 
+              severity="secondary"
+              styleClass="w-full justify-start">
+            </p-button>
+              <!-- <p-button 
+    label="Convert to Enrollment" 
+    icon="pi pi-user-plus" 
+    severity="success"
+    [routerLink]="['/dashboard/enrollments/from-lead', leadId]"
+    pTooltip="Convert this lead to enrollment"
+    *ngIf="lead.status !== 'converted'">
+  </p-button> -->
+            <p-button 
+              label="Convert to Student" 
+              icon="pi pi-check-circle" 
+              severity="success"
+              styleClass="w-full justify-start">
+            </p-button>
+          </div>
+        </p-card>
+
+        <!-- Metadata Card -->
+        <p-card header="Metadata">
+          <div class="space-y-3">
+            <div>
+              <p class="text-sm text-gray-500">Created</p>
+              <p class="font-medium text-sm">
+                {{ lead.createdAt | date:'medium' }}
+              </p>
+            </div>
+            
+            <div>
+              <p class="text-sm text-gray-500">Last Updated</p>
+              <p class="font-medium text-sm">
+                {{ lead.updatedAt | date:'medium' }}
+              </p>
+            </div>
+            
+            <div *ngIf="lead.assignedTo">
+              <p class="text-sm text-gray-500">Assigned To</p>
+              <p class="font-medium text-sm">{{ lead.assignedTo }}</p>
+            </div>
+            
+            <div *ngIf="lead.lastFollowUpDate">
+              <p class="text-sm text-gray-500">Last Follow-up</p>
+              <p class="font-medium text-sm">
+                {{ lead.lastFollowUpDate | date:'medium' }}
+              </p>
+            </div>
+            
+            <div *ngIf="lead.nextFollowUpDate">
+              <p class="text-sm text-gray-500">Next Follow-up</p>
+              <p class="font-medium text-sm">
+                {{ lead.nextFollowUpDate | date:'medium' }}
+              </p>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Follow-up Dialog -->
+  <p-dialog 
+    [(visible)]="showFollowUpDialog" 
+    header="Add Follow-up" 
+    [modal]="true"
+    styleClass="w-full md:w-6 lg:w-4"
+    (onHide)="showFollowUpDialog = false">
+    
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Next Follow-up Date & Time
+        </label>
+        <p-date-picker 
+          [(ngModel)]="followUpData.nextFollowUpDate" 
+          [showTime]="true" 
+          [hourFormat]="'12'"
+          dateFormat="yy-mm-dd"
+          styleClass="w-full">
+        </p-date-picker>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Notes *
+        </label>
+        <textarea 
+          pInputTextarea 
+          [(ngModel)]="followUpData.note" 
+          [rows]="4"
+          placeholder="Enter follow-up notes..."
+          class="w-full"
+          required>
+        </textarea>
+        <small class="text-gray-500">Note is required</small>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Cancel" 
+        severity="secondary" 
+        (click)="showFollowUpDialog = false">
+      </p-button>
+      <p-button 
+        label="Add Follow-up" 
+        (click)="addFollowUp()"
+        [disabled]="!followUpData.note">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+</div>

@@ -1,0 +1,294 @@
+<div class="p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-4">
+      <button pButton 
+              icon="pi pi-arrow-left" 
+              class="p-button-text"
+              (click)="cancel()"
+              pTooltip="Back to Batches">
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">
+          {{ isEditMode ? 'Edit Batch' : 'Create New Batch' }}
+        </h1>
+        <p class="text-gray-600">
+          {{ isEditMode ? 'Update batch details and schedule' : 'Create a new batch for a course' }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading batch details...</p>
+  </div>
+
+  <!-- Batch Form -->
+  <div *ngIf="!loading" class="space-y-6">
+    <p-card>
+      <form [formGroup]="batchForm" class="space-y-8">
+        
+        <!-- Basic Information -->
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="pi pi-info-circle mr-2 text-primary-500"></i>
+            Basic Information
+          </h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Batch Name -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Batch Name *
+              </label>
+              <input pInputText 
+                     formControlName="name"
+                     placeholder="e.g., Morning Batch - Web Development"
+                     [class.p-invalid]="isFieldInvalid('name')"
+                     class="w-full">
+              <small *ngIf="isFieldInvalid('name')" class="p-error block">
+                Batch name is required
+              </small>
+            </div>
+
+            <!-- Course Selection -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Course *
+              </label>
+              <p-select 
+                formControlName="course"
+                [options]="courseOptions"
+                placeholder="Select a course"
+                [loading]="loadingCourses"
+                [filter]="true"
+                [showClear]="false"
+                [class.p-invalid]="isFieldInvalid('course')"
+                styleClass="w-full">
+              </p-select>
+              <small *ngIf="isFieldInvalid('course')" class="p-error block">
+                Course selection is required
+              </small>
+            </div>
+
+            <!-- Trainer Selection -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Trainer *
+              </label>
+              <p-select 
+                formControlName="trainer"
+                [options]="trainerOptions"
+                placeholder="Select a trainer"
+                [loading]="loadingTrainers"
+                [filter]="true"
+                [showClear]="false"
+                [class.p-invalid]="isFieldInvalid('trainer')"
+                styleClass="w-full">
+              </p-select>
+              <small *ngIf="isFieldInvalid('trainer')" class="p-error block">
+                Trainer selection is required
+              </small>
+            </div>
+
+            <!-- Maximum Capacity -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Maximum Students *
+              </label>
+              <p-inputNumber 
+                formControlName="maxCapacity"
+                [min]="1"
+                [max]="100"
+                [showButtons]="true"
+                [class.p-invalid]="isFieldInvalid('maxCapacity')"
+                class="w-full">
+              </p-inputNumber>
+              <small *ngIf="isFieldInvalid('maxCapacity')" class="p-error block">
+                Maximum capacity is required and must be at least 1
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule Information -->
+        <div class="border-t border-gray-200 pt-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="pi pi-clock mr-2 text-primary-500"></i>
+            Schedule & Timing
+          </h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Start Date -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Start Date *
+              </label>
+              <p-datePicker 
+                formControlName="startDate"
+                [showIcon]="true"
+                [showButtonBar]="true"
+                [minDate]="today"
+                placeholder="Select start date"
+                [class.p-invalid]="isFieldInvalid('startDate')"
+                styleClass="w-full">
+              </p-datePicker>
+              <small *ngIf="isFieldInvalid('startDate')" class="p-error block">
+                Start date is required
+              </small>
+            </div>
+
+            <!-- End Date -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                End Date *
+              </label>
+              <p-datePicker 
+                formControlName="endDate"
+                [showIcon]="true"
+                [showButtonBar]="true"
+                [minDate]="batchForm.get('startDate')?.value || today"
+                placeholder="Select end date"
+                [class.p-invalid]="isFieldInvalid('endDate')"
+                styleClass="w-full">
+              </p-datePicker>
+              <small *ngIf="isFieldInvalid('endDate')" class="p-error block">
+                End date is required and must be after start date
+              </small>
+            </div>
+
+            <!-- Days of Week -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Class Days *
+              </label>
+            <p-multiSelect 
+  formControlName="days"
+  [options]="dayOptions"
+  placeholder="Select days"
+  [showClear]="false"
+  [class.p-invalid]="isFieldInvalid('days')"
+  styleClass="w-full">
+</p-multiSelect>
+
+
+              <small *ngIf="isFieldInvalid('days')" class="p-error block">
+                At least one day must be selected
+              </small>
+            </div>
+
+            <!-- Time Slot -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">
+                  Start Time *
+                </label>
+                <p-select 
+                  formControlName="startTime"
+                  [options]="timeOptions"
+                  placeholder="Start time"
+                  [class.p-invalid]="isFieldInvalid('startTime')"
+                  styleClass="w-full">
+                </p-select>
+                <small *ngIf="isFieldInvalid('startTime')" class="p-error block">
+                  Start time is required
+                </small>
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">
+                  End Time *
+                </label>
+                <p-select 
+                  formControlName="endTime"
+                  [options]="timeOptions"
+                  placeholder="End time"
+                  [class.p-invalid]="isFieldInvalid('endTime')"
+                  styleClass="w-full">
+                </p-select>
+                <small *ngIf="isFieldInvalid('endTime')" class="p-error block">
+                  End time is required
+                </small>
+              </div>
+            </div>
+
+            <!-- Format -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Class Format *
+              </label>
+              <p-select 
+                formControlName="format"
+                [options]="formatOptions"
+                placeholder="Select format"
+                [class.p-invalid]="isFieldInvalid('format')"
+                styleClass="w-full">
+              </p-select>
+              <small *ngIf="isFieldInvalid('format')" class="p-error block">
+                Class format is required
+              </small>
+            </div>
+
+            <!-- Room/Link (Conditional) -->
+            <div class="space-y-2" *ngIf="batchForm.get('format')?.value === 'offline'">
+              <label class="block text-sm font-medium text-gray-700">
+                Room Number *
+              </label>
+              <input pInputText 
+                     formControlName="room"
+                     placeholder="e.g., Room 301, Lab 2"
+                     [class.p-invalid]="isFieldInvalid('room')"
+                     class="w-full">
+              <small *ngIf="isFieldInvalid('room')" class="p-error block">
+                Room number is required for offline classes
+              </small>
+            </div>
+
+            <div class="space-y-2" *ngIf="batchForm.get('format')?.value === 'online'">
+              <label class="block text-sm font-medium text-gray-700">
+                Meeting Link *
+              </label>
+              <input pInputText 
+                     formControlName="meetingLink"
+                     placeholder="https://meet.google.com/..."
+                     [class.p-invalid]="isFieldInvalid('meetingLink')"
+                     class="w-full">
+              <small *ngIf="isFieldInvalid('meetingLink')" class="p-error block">
+                Meeting link is required for online classes
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status (Edit Mode Only) -->
+        <div class="border-t border-gray-200 pt-6" *ngIf="isEditMode">
+          <div class="space-y-2">
+            <label class="flex items-center space-x-3">
+              <p-checkbox formControlName="isActive" 
+                         [binary]="true"></p-checkbox>
+              <span class="text-sm font-medium text-gray-700">Batch is Active</span>
+            </label>
+          </div>
+        </div>
+      </form>
+    </p-card>
+
+    <!-- Form Actions -->
+    <div class="flex justify-end space-x-3">
+      <p-button 
+        label="Cancel" 
+        icon="pi pi-times" 
+        severity="contrast"
+        (click)="cancel()">
+      </p-button>
+      <p-button 
+        [label]="isEditMode ? 'Update Batch' : 'Create Batch'"
+        [icon]="isEditMode ? 'pi pi-save' : 'pi pi-plus'"
+        (click)="onSubmit()"
+        [loading]="submitting"
+        [disabled]="batchForm.invalid">
+      </p-button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,222 @@
+<div class="p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-4">
+      <button pButton 
+              icon="pi pi-arrow-left" 
+              class="p-button-text"
+              (click)="cancel()"
+              pTooltip="Back">
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Record Payment</h1>
+        <p class="text-gray-600">Add payment for enrollment #{{ enrollment?.enrollmentNumber }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading enrollment details...</p>
+  </div>
+
+  <!-- Payment Form -->
+  <div *ngIf="!loading && enrollment" class="space-y-6">
+    <!-- Enrollment Summary Card -->
+    <p-card>
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h3 class="font-medium text-gray-800">{{ enrollment.student.name }}</h3>
+          <p class="text-sm text-gray-600">{{ enrollment.course?.name }} - {{ enrollment.course?.code }}</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="text-right">
+            <p class="text-sm text-gray-600">Total Fee</p>
+            <p class="text-lg font-bold">Rs {{ enrollment.fees.finalAmount | number }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-600">Paid Amount</p>
+            <p class="text-lg font-bold text-green-600">Rs {{ enrollment.fees.paidAmount | number }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-600">Due Amount</p>
+            <p class="text-lg font-bold text-red-600">Rs {{ enrollment.fees.dueAmount | number }}</p>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Payment Form -->
+    <p-card header="Payment Details">
+      <form [formGroup]="paymentForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Payment Amount -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              Payment Amount *
+            </label>
+            <p-inputNumber 
+              formControlName="amount"
+              [min]="1"
+              [max]="enrollment.fees.dueAmount"
+              mode="currency" 
+              currency="PKR"
+              [class.p-invalid]="isFieldInvalid('amount')"
+              class="w-full">
+            </p-inputNumber>
+            <small *ngIf="isFieldInvalid('amount')" class="p-error block">
+              <span *ngIf="paymentForm.get('amount')?.errors?.['required']">Amount is required</span>
+              <span *ngIf="paymentForm.get('amount')?.errors?.['min']">Amount must be greater than 0</span>
+              <span *ngIf="paymentForm.get('amount')?.errors?.['max']">Amount cannot exceed due amount</span>
+            </small>
+            <small class="text-gray-500">
+              Maximum payable: Rs {{ enrollment.fees.dueAmount | number }}
+            </small>
+          </div>
+
+          <!-- Payment Date -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              Payment Date *
+            </label>
+            <p-datePicker 
+              formControlName="paymentDate"
+              [showIcon]="true"
+              [showButtonBar]="true"
+              [maxDate]="today"
+              placeholder="Select payment date"
+              [class.p-invalid]="isFieldInvalid('paymentDate')"
+              styleClass="w-full">
+            </p-datePicker>
+            <small *ngIf="isFieldInvalid('paymentDate')" class="p-error block">
+              Payment date is required
+            </small>
+          </div>
+
+          <!-- Payment Mode -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              Payment Mode *
+            </label>
+            <p-select 
+              formControlName="paymentMode"
+              [options]="paymentModeOptions"
+              placeholder="Select payment mode"
+              [class.p-invalid]="isFieldInvalid('paymentMode')"
+              styleClass="w-full"
+              (onChange)="onPaymentModeChange()">
+            </p-select>
+            <small *ngIf="isFieldInvalid('paymentMode')" class="p-error block">
+              Payment mode is required
+            </small>
+          </div>
+
+          <!-- Reference/Transaction ID (Conditional) -->
+          <div class="space-y-2" *ngIf="showTransactionRef">
+            <label class="block text-sm font-medium text-gray-700">
+              Transaction ID / Reference *
+            </label>
+            <input pInputText 
+                   formControlName="transactionReference"
+                   placeholder="Enter transaction ID"
+                   [class.p-invalid]="isFieldInvalid('transactionReference')"
+                   class="w-full">
+            <small *ngIf="isFieldInvalid('transactionReference')" class="p-error block">
+              Transaction reference is required
+            </small>
+          </div>
+
+          <!-- Bank Name (For Bank Transfer) -->
+          <div class="space-y-2" *ngIf="paymentForm.get('paymentMode')?.value === 'bank_transfer'">
+            <label class="block text-sm font-medium text-gray-700">
+              Bank Name *
+            </label>
+            <input pInputText 
+                   formControlName="bankName"
+                   placeholder="Enter bank name"
+                   class="w-full">
+          </div>
+
+          <!-- Card Last 4 Digits (For Card) -->
+          <div class="space-y-2" *ngIf="paymentForm.get('paymentMode')?.value === 'card'">
+            <label class="block text-sm font-medium text-gray-700">
+              Card Last 4 Digits
+            </label>
+            <input pInputText 
+                   formControlName="cardLastFour"
+                   placeholder="XXXX"
+                   maxlength="4"
+                   pattern="[0-9]{4}"
+                   class="w-full">
+          </div>
+
+          <!-- UPI ID (For UPI) -->
+          <div class="space-y-2" *ngIf="paymentForm.get('paymentMode')?.value === 'upi'">
+            <label class="block text-sm font-medium text-gray-700">
+              UPI ID
+            </label>
+            <input pInputText 
+                   formControlName="upiId"
+                   placeholder="example@okhdfcbank"
+                   class="w-full">
+          </div>
+
+          <!-- Cheque Number & Date (For Cheque) -->
+          <ng-container *ngIf="paymentForm.get('paymentMode')?.value === 'cheque'">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Cheque Number *
+              </label>
+              <input pInputText 
+                     formControlName="chequeNumber"
+                     placeholder="Enter cheque number"
+                     class="w-full">
+            </div>
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Cheque Date
+              </label>
+              <p-datePicker 
+                formControlName="chequeDate"
+                [showIcon]="true"
+                placeholder="Select cheque date"
+                styleClass="w-full">
+              </p-datePicker>
+            </div>
+          </ng-container>
+
+          <!-- Remarks -->
+          <div class="space-y-2 md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700">
+              Remarks / Notes
+            </label>
+            <textarea pInputTextarea 
+                      formControlName="remarks"
+                      rows="2"
+                      placeholder="Any additional information about this payment..."
+                      class="w-full">
+            </textarea>
+          </div>
+        </div>
+      </form>
+    </p-card>
+
+    <!-- Form Actions -->
+    <div class="flex justify-end space-x-3">
+      <p-button 
+        label="Cancel" 
+        icon="pi pi-times" 
+        severity="secondary"
+        (click)="cancel()">
+      </p-button>
+      <p-button 
+        label="Record Payment" 
+        icon="pi pi-credit-card"
+        (click)="onSubmit()"
+        [loading]="submitting"
+        [disabled]="paymentForm.invalid">
+      </p-button>
+    </div>
+  </div>
+</div>

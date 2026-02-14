@@ -1,0 +1,243 @@
+<div class="p-6">
+  <!-- Header with Back Button -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button pButton 
+                icon="pi pi-arrow-left" 
+                class="p-button-text"
+                (click)="goBack()"
+                pTooltip="Back to Batch Details">
+        </button>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Mark Attendance</h1>
+          <p class="text-gray-600" *ngIf="batch">
+            {{ batch.name }} - {{ batch.batchNumber }}
+          </p>
+        </div>
+      </div>
+      
+      <!-- Save Button -->
+      <p-button 
+        label="Save Attendance" 
+        icon="pi pi-check" 
+        severity="success"
+        (click)="saveAttendance()"
+        [loading]="saving"
+        [disabled]="!hasChanges">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-2 text-gray-600">Loading batch and student data...</p>
+  </div>
+
+  <!-- Attendance Section -->
+  <div *ngIf="!loading && batch" class="space-y-6">
+    <!-- Date Selection & Summary Card -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <!-- Date Selection -->
+        <div class="flex items-center space-x-4">
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-gray-700">Select Date</label>
+            <p-datePicker 
+              [(ngModel)]="selectedDate"
+              [showIcon]="true"
+              [showButtonBar]="true"
+              [maxDate]="today"
+              (onSelect)="onDateChange()"
+              styleClass="w-48">
+            </p-datePicker>
+          </div>
+          
+          <div class="flex space-x-2">
+            <p-button 
+              icon="pi pi-chevron-left" 
+              severity="secondary" 
+              text
+              (click)="previousDay()">
+            </p-button>
+            <p-button 
+              icon="pi pi-calendar" 
+              severity="secondary" 
+              text
+              (click)="selectedDate = today; onDateChange()"
+              pTooltip="Today">
+            </p-button>
+            <p-button 
+              icon="pi pi-chevron-right" 
+              severity="secondary" 
+              text
+              (click)="nextDay()">
+            </p-button>
+          </div>
+        </div>
+
+        <!-- Attendance Summary -->
+        <div class="flex items-center space-x-6">
+          <div class="text-center">
+            <span class="text-sm text-gray-500">Total</span>
+            <div class="text-xl font-bold">{{ students.length }}</div>
+          </div>
+          <div class="text-center">
+            <span class="text-sm text-green-600">Present</span>
+            <div class="text-xl font-bold text-green-600">{{ getStatusCount('present') }}</div>
+          </div>
+          <div class="text-center">
+            <span class="text-sm text-yellow-600">Late</span>
+            <div class="text-xl font-bold text-yellow-600">{{ getStatusCount('late') }}</div>
+          </div>
+          <div class="text-center">
+            <span class="text-sm text-red-600">Absent</span>
+            <div class="text-xl font-bold text-red-600">{{ getStatusCount('absent') }}</div>
+          </div>
+          <div class="text-center">
+            <span class="text-sm text-blue-600">Leave</span>
+            <div class="text-xl font-bold text-blue-600">{{ getStatusCount('leave') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions Card -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <span class="text-sm font-medium text-gray-700">Bulk Actions:</span>
+          <p-select 
+            [options]="bulkStatusOptions" 
+            placeholder="Set status for all"
+            (onChange)="setAllStatus($event.value)"
+            styleClass="w-48">
+          </p-select>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-600">
+            <i class="pi pi-info-circle mr-1"></i>
+            Changes are not saved until you click "Save Attendance"
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Students Attendance Table -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">Students List</h2>
+      </div>
+      
+      <p-table [value]="students" [paginator]="true" [rows]="15">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 5%">#</th>
+            <th style="width: 25%">Student Name</th>
+            <th style="width: 20%">Email</th>
+            <th style="width: 15%">Phone</th>
+            <th style="width: 15%">Enrollment #</th>
+            <th style="width: 20%">Attendance Status</th>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="body" let-student let-i="rowIndex">
+          <tr [class.bg-yellow-50]="hasChanges && isStatusChanged(student)">
+            <td class="font-medium">{{ i + 1 }}</td>
+            <td>
+              <div class="flex items-center">
+                <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                  <span class="text-primary-700 font-medium">
+                    {{ student.student.name.charAt(0) }}
+                  </span>
+                </div>
+                <span class="font-medium">{{ student.student.name }}</span>
+              </div>
+            </td>
+            <td>{{ student.student.email }}</td>
+            <td>{{ student.student.phone }}</td>
+            <td>
+              <span class="font-mono text-sm text-blue-600">
+                {{ student.enrollmentNumber }}
+              </span>
+            </td>
+            <td>
+              <div class="flex items-center space-x-3">
+                <!-- Present Button -->
+                <button pButton 
+                        type="button"
+                        [class]="getAttendanceStatus(student.enrollment._id) === 'present' ? 'p-button-success' : 'p-button-text p-button-secondary'"
+                        icon="pi pi-check-circle"
+                        pTooltip="Present"
+                        tooltipPosition="top"
+                        (click)="setAttendanceStatus(student.enrollment._id, 'present')">
+                </button>
+                
+                <!-- Late Button -->
+                <button pButton 
+                        type="button"
+                        [class]="getAttendanceStatus(student.enrollment._id) === 'late' ? 'p-button-warning' : 'p-button-text p-button-secondary'"
+                        icon="pi pi-clock"
+                        pTooltip="Late"
+                        tooltipPosition="top"
+                        (click)="setAttendanceStatus(student.enrollment._id, 'late')">
+                </button>
+                
+                <!-- Absent Button -->
+                <button pButton 
+                        type="button"
+                        [class]="getAttendanceStatus(student.enrollment._id) === 'absent' ? 'p-button-danger' : 'p-button-text p-button-secondary'"
+                        icon="pi pi-ban"
+                        pTooltip="Absent"
+                        tooltipPosition="top"
+                        (click)="setAttendanceStatus(student.enrollment._id, 'absent')">
+                </button>
+                
+                <!-- Leave Button -->
+                <button pButton 
+                        type="button"
+                        [class]="getAttendanceStatus(student.enrollment._id) === 'leave' ? 'p-button-info' : 'p-button-text p-button-secondary'"
+                        icon="pi pi-calendar"
+                        pTooltip="Leave"
+                        tooltipPosition="top"
+                        (click)="setAttendanceStatus(student.enrollment._id, 'leave')">
+                </button>
+                
+                <!-- Status Indicator -->
+                <p-tag 
+                  *ngIf="getAttendanceStatus(student.enrollment._id)"
+                  [value]="getAttendanceStatus(student.enrollment._id) | titlecase"
+                  [severity]="getStatusSeverity(getAttendanceStatus(student.enrollment._id))"
+                  styleClass="ml-2">
+                </p-tag>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-8 text-gray-500">
+              <i class="pi pi-users text-3xl mb-2 block"></i>
+              <p>No students enrolled in this batch</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Remarks Section -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Additional Remarks (Optional)
+      </label>
+      <textarea 
+        [(ngModel)]="remarks"
+        rows="2"
+        placeholder="Enter any additional notes about today's attendance..."
+        class="w-full border border-gray-300 rounded-md p-2 focus:ring-primary-500 focus:border-primary-500">
+      </textarea>
+    </div>
+  </div>
+</div>

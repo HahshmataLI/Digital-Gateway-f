@@ -1,0 +1,140 @@
+<div class="p-6" *ngIf="receipt">
+  <!-- Print Controls -->
+  <div class="mb-4 flex justify-end space-x-3 no-print">
+    <p-button 
+      label="Print Receipt" 
+      icon="pi pi-print" 
+      (click)="printReceipt()">
+    </p-button>
+    <p-button 
+      label="Download PDF" 
+      icon="pi pi-download" 
+      severity="secondary"
+      (click)="downloadPDF()">
+    </p-button>
+    <p-button 
+      label="Back" 
+      icon="pi pi-arrow-left" 
+      severity="secondary"
+      (click)="goBack()">
+    </p-button>
+  </div>
+
+  <!-- Receipt Content -->
+  <div id="receipt-content" class="bg-white rounded-lg shadow-sm p-8 max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="text-center border-b border-gray-200 pb-6 mb-6">
+      <div class="flex justify-center mb-4">
+        <i class="pi pi-graduation-cap text-4xl text-primary-600"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-800">Digital Gateway</h1>
+      <p class="text-gray-600">Training Institute</p>
+      <h2 class="text-xl font-semibold text-gray-700 mt-4">PAYMENT RECEIPT</h2>
+    </div>
+
+    <!-- Receipt Info -->
+    <div class="flex justify-between mb-6">
+      <div>
+        <p class="text-sm text-gray-600">Receipt No:</p>
+        <p class="font-bold text-lg">{{ receipt.receiptNumber }}</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600">Date:</p>
+        <p class="font-bold">{{ receipt.date | date:'fullDate' }}</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600">Payment No:</p>
+        <p class="font-mono text-sm">{{ receipt.paymentNumber }}</p>
+      </div>
+    </div>
+
+    <!-- Student Details -->
+    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+      <h3 class="font-semibold text-gray-700 mb-3">Student Details</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-600">Name</p>
+          <p class="font-medium">{{ receipt.student.name }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Email</p>
+          <p class="font-medium">{{ receipt.student.email }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Phone</p>
+          <p class="font-medium">{{ receipt.student.phone }}</p>
+        </div>
+        <div *ngIf="receipt.student.address">
+          <p class="text-sm text-gray-600">Address</p>
+          <p class="font-medium">{{ receipt.student.address }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Course Details -->
+    <div class="mb-6">
+      <h3 class="font-semibold text-gray-700 mb-3">Course Details</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-600">Course Name</p>
+          <p class="font-medium">{{ receipt.course.name }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Course Code</p>
+          <p class="font-medium">{{ receipt.course.code }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Details -->
+    <div class="mb-6">
+      <h3 class="font-semibold text-gray-700 mb-3">Payment Details</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-600">Amount Paid</p>
+          <p class="text-xl font-bold text-green-600">Rs {{ receipt.amount | number }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Payment Mode</p>
+          <p class="font-medium">{{ receipt.paymentMode | titlecase }}</p>
+        </div>
+        <div *ngIf="receipt.transactionReference">
+          <p class="text-sm text-gray-600">Transaction Reference</p>
+          <p class="font-mono text-sm">{{ receipt.transactionReference }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Received By</p>
+          <p class="font-medium">{{ receipt.receivedBy }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Amount in Words -->
+    <div class="border-t border-gray-200 pt-4 mb-4">
+      <p class="text-sm text-gray-600">Amount in Words</p>
+      <p class="font-medium text-lg">{{ receipt.amountInWords }}</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="border-t border-gray-200 pt-6 text-center">
+      <p class="text-sm text-gray-600 mb-2">This is a computer generated receipt. No signature required.</p>
+      <p class="text-xs text-gray-500">Generated on: {{ receipt.timestamp | date:'medium' }}</p>
+      
+      <div class="mt-6 flex justify-center space-x-8">
+        <div class="text-center">
+          <p class="text-sm font-medium">________________</p>
+          <p class="text-xs text-gray-600">Authorized Signatory</p>
+        </div>
+        <div class="text-center">
+          <p class="text-sm font-medium">________________</p>
+          <p class="text-xs text-gray-600">Student Signature</p>
+        </div>
+      </div>
+      
+      <div class="mt-8 text-xs text-gray-400">
+        <p>Digital Gateway Training Institute</p>
+        <p>Thank you for choosing us!</p>
+      </div>
+    </div>
+  </div>
+</div>

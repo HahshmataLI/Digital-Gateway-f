@@ -1,0 +1,15 @@
+<div class="min-h-screen flex flex-col bg-gray-50">
+  <app-header></app-header>
+  
+  <div class="flex flex-1">
+    <app-sidebar></app-sidebar>
+    
+    <main class="flex-1 p-6 overflow-auto">
+      <div class="max-w-7xl mx-auto">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+  
+  <app-footer></app-footer>
+</div>

@@ -1,0 +1,14 @@
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+  }
+  
+  #receipt-content {
+    box-shadow: none;
+    padding: 0;
+  }
+}

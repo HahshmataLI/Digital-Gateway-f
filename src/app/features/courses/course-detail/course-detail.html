@@ -1,0 +1,209 @@
+<div class="p-6">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">
+            {{ course?.name || 'Loading...' }}
+          </h1>
+          <p class="text-gray-600">Course Details</p>
+        </div>
+        <p-button 
+          label="Back to Courses" 
+          icon="pi pi-arrow-left" 
+          severity="secondary"
+          routerLink="/dashboard/courses">
+        </p-button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-12">
+      <p-progressSpinner></p-progressSpinner>
+      <p class="mt-2 text-gray-600">Loading course details...</p>
+    </div>
+
+    <!-- Course Content -->
+    <div *ngIf="!loading && course" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column - Course Information -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Basic Information Card -->
+        <p-card header="Basic Information">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Course Code</p>
+              <p class="font-mono font-bold text-blue-600">{{ course.code }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Duration</p>
+              <p class="font-medium">{{ course.duration }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Fees</p>
+              <p class="font-medium">Rs {{ course.fees | number }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Status</p>
+              <div class="flex items-center space-x-4">
+                <p-tag 
+                  [value]="course.isActive ? 'Active' : 'Inactive'"
+                  [severity]="course.isActive ? 'success' : 'danger'">
+                </p-tag>
+                
+                <div class="flex items-center space-x-2">
+                  <p-button 
+                    [label]="course.isActive ? 'Deactivate' : 'Activate'" 
+                    [icon]="course.isActive ? 'pi pi-ban' : 'pi pi-check'"
+                    [severity]="course.isActive ? 'warn' : 'success'" 
+                    size="small"
+                    (click)="toggleCourseStatus()">
+                  </p-button>
+                </div>
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <p class="text-sm text-gray-500 mb-1">Description</p>
+              <p class="text-gray-700 whitespace-pre-line">{{ course.description || 'No description available' }}</p>
+            </div>
+          </div>
+        </p-card>
+
+        <!-- Curriculum Card -->
+        <p-card header="Curriculum">
+          <div class="space-y-3" *ngIf="course.curriculum && course.curriculum.length > 0">
+            <div *ngFor="let topic of course.curriculum; let i = index" 
+                 class="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center space-x-2 mb-1">
+                    <span class="text-xs font-mono text-gray-500 px-2 py-1 bg-gray-200 rounded">
+                      Topic {{ i + 1 }}
+                    </span>
+                    <h4 class="font-medium text-gray-800">{{ topic.topic }}</h4>
+                  </div>
+                  <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                    <span class="flex items-center">
+                      <i class="pi pi-clock mr-1"></i>
+                      {{ topic.hours }} hour{{ topic.hours !== 1 ? 's' : '' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="!course.curriculum || course.curriculum.length === 0" class="text-center py-8 text-gray-500">
+            <i class="pi pi-book text-3xl mb-2"></i>
+            <p>No curriculum topics added</p>
+          </div>
+        </p-card>
+
+        <!-- Prerequisites Card -->
+        <p-card header="Prerequisites">
+          <div class="space-y-2" *ngIf="course.prerequisites && course.prerequisites.length > 0">
+            <p *ngFor="let prereq of course.prerequisites" class="flex items-center text-gray-700">
+              <i class="pi pi-check-circle text-green-500 mr-2"></i>
+              {{ prereq }}
+            </p>
+          </div>
+          
+          <div *ngIf="!course.prerequisites || course.prerequisites.length === 0" class="text-center py-8 text-gray-500">
+            <i class="pi pi-info-circle text-3xl mb-2"></i>
+            <p>No prerequisites specified</p>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Right Column - Actions & Metadata -->
+      <div class="space-y-6">
+        <!-- Actions Card -->
+        <p-card header="Actions">
+          <div class="space-y-3">
+            <p-button 
+              label="Edit Course" 
+              icon="pi pi-pencil" 
+              severity="info"
+              styleClass="w-full justify-start"
+              [routerLink]="['/dashboard/courses', course._id, 'edit']">
+            </p-button>
+            
+            <p-button 
+              label="View Students" 
+              icon="pi pi-users" 
+              severity="secondary"
+              styleClass="w-full justify-start"
+              (click)="viewStudents()">
+            </p-button>
+            
+            <p-button 
+              label="Duplicate Course" 
+              icon="pi pi-copy" 
+              severity="secondary"
+              styleClass="w-full justify-start"
+              (click)="duplicateCourse()">
+            </p-button>
+            
+            <p-button 
+              label="Delete Course" 
+              icon="pi pi-trash" 
+              severity="danger"
+              styleClass="w-full justify-start"
+              (click)="deleteCourse()">
+            </p-button>
+          </div>
+        </p-card>
+
+        <!-- Metadata Card -->
+        <p-card header="Metadata">
+          <div class="space-y-3">
+           <!-- In the Metadata Card section, update these parts: -->
+<div *ngIf="course.createdBy">
+  <p class="text-sm text-gray-500">Created By</p>
+  <p class="font-medium text-sm">
+    {{ getUserName(course.createdBy) }}
+  </p>
+</div>
+
+<div *ngIf="course.updatedBy">
+  <p class="text-sm text-gray-500">Last Updated By</p>
+  <p class="font-medium text-sm">
+    {{ getUserName(course.updatedBy) }}
+  </p>
+</div>
+            
+      <div *ngIf="course.updatedBy && typeof course.updatedBy === 'object'">
+  <p class="text-sm text-gray-500">Last Updated By</p>
+  <p class="font-medium text-sm">
+    {{ course.updatedBy.name }}
+  </p>
+</div>
+            <div *ngIf="course.updatedAt">
+              <p class="text-sm text-gray-500">Last Updated</p>
+              <p class="font-medium text-sm">
+                {{ course.updatedAt | date:'medium' }}
+              </p>
+            </div>
+            
+            <div>
+              <p class="text-sm text-gray-500">Curriculum Topics</p>
+              <p class="font-medium text-sm">
+                {{ course.curriculum.length || 0 }} topics
+              </p>
+            </div>
+            
+            <div>
+              <p class="text-sm text-gray-500">Total Course Hours</p>
+              <p class="font-medium text-sm">
+                {{ getTotalCourseHours() }} hours
+              </p>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+ 
+</div>
