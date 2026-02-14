@@ -25,8 +25,8 @@ import { environment } from '../../../../environments/environment.prod';
   styleUrl: './login.css',
 })
 export class Login  {
-  email = 'admin@digitalgateway.com';
-  password = 'Admin@123';
+  email = '';
+  password = '';
   loading = false;
 
   constructor(
