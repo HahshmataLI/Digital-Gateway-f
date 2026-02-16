@@ -59,12 +59,7 @@ export const routes: Routes = [
         canActivate: [RoleGuard],
         data: { roles: [UserRole.ADMIN, UserRole.COUNSELOR, UserRole.ACCOUNTANT] }
       },
-      {
-        path: 'payments',
-        loadChildren: () => import('./features/payments/payments.routes').then(m => m.PAYMENTS_ROUTES),
-        canActivate: [RoleGuard],
-        data: { roles: [UserRole.ADMIN, UserRole.ACCOUNTANT] }
-      }
+      
     ]
   },
   {

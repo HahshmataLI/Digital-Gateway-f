@@ -15,6 +15,7 @@ import { ToastModule } from 'primeng/toast';
 import { CardModule } from 'primeng/card';
 import { ToolbarModule } from 'primeng/toolbar';
 import { CheckboxModule } from 'primeng/checkbox';
+import { AvatarModule } from 'primeng/avatar';
 import { InputNumberModule } from 'primeng/inputnumber';
 // import { InputTextareaModule } from 'primeng/inputtextarea';
 // import { CalendarModule } from 'primeng/calendar';
@@ -32,6 +33,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
     TagModule,
     MultiSelectModule,
     ProgressBarModule,
+    AvatarModule,
     ButtonModule,
     DatePickerModule,
     InputTextModule,
@@ -51,7 +53,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
     CommonModule,
     FormsModule,
     MultiSelectModule,
-
+    AvatarModule,
     ButtonModule,
     InputTextModule,
     TooltipModule,

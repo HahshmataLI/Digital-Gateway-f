@@ -1,34 +1,39 @@
-
-
-
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { PanelMenuModule } from 'primeng/panelmenu';
+import { AvatarModule } from 'primeng/avatar';
 import { UserRole } from '../../../models/user.model';
 import { AuthService } from '../../../services/auth.service';
+
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule, RouterModule, PanelMenuModule],
+  imports: [CommonModule, RouterModule, PanelMenuModule, AvatarModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
 export class Sidebar implements OnInit {
-    menuItems: MenuItem[] = [];
-
-  constructor(private authService: AuthService) {}
+  @Output() closeSidebar = new EventEmitter<void>();
+  
+  menuItems: MenuItem[] = [];
+  user: any;
+  
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
-    this.buildMenu();
+    this.authService.currentUser$.subscribe(user => {
+      this.user = user;
+      this.buildMenu();
+    });
   }
 
   private buildMenu(): void {
-    const user = this.authService.getCurrentUser();
+    const user = this.user;
     const menu: MenuItem[] = [
       {
         label: 'Dashboard',
-        icon: 'pi pi-home',
+        icon: 'pi pi-chart-pie',
         routerLink: '/dashboard',
         routerLinkActiveOptions: { exact: true }
       }
@@ -39,6 +44,7 @@ export class Sidebar implements OnInit {
       menu.push({
         label: 'Leads',
         icon: 'pi pi-users',
+        expanded: false,
         items: [
           {
             label: 'All Leads',
@@ -47,7 +53,7 @@ export class Sidebar implements OnInit {
           },
           {
             label: 'Add New Lead',
-            icon: 'pi pi-plus',
+            icon: 'pi pi-user-plus',
             routerLink: '/dashboard/leads/new'
           }
         ]
@@ -59,6 +65,7 @@ export class Sidebar implements OnInit {
       menu.push({
         label: 'Courses',
         icon: 'pi pi-book',
+        expanded: false,
         items: [
           {
             label: 'All Courses',
@@ -79,6 +86,7 @@ export class Sidebar implements OnInit {
       menu.push({
         label: 'Batches',
         icon: 'pi pi-calendar',
+        expanded: false,
         items: [
           {
             label: 'All Batches',
@@ -104,6 +112,7 @@ export class Sidebar implements OnInit {
       menu.push({
         label: 'Enrollments',
         icon: 'pi pi-user-plus',
+        expanded: false,
         items: [
           {
             label: 'All Enrollments',
@@ -124,6 +133,7 @@ export class Sidebar implements OnInit {
       menu.push({
         label: 'Payments',
         icon: 'pi pi-credit-card',
+        expanded: false,
         items: [
           {
             label: 'All Payments',
@@ -144,6 +154,7 @@ export class Sidebar implements OnInit {
       menu.push({
         label: 'Users',
         icon: 'pi pi-user',
+        expanded: false,
         items: [
           {
             label: 'All Users',
@@ -164,6 +175,7 @@ export class Sidebar implements OnInit {
       menu.push({
         label: 'Reports',
         icon: 'pi pi-chart-bar',
+        expanded: false,
         items: [
           {
             label: 'Dashboard',
@@ -191,105 +203,13 @@ export class Sidebar implements OnInit {
 
     this.menuItems = menu;
   }
-//   menuItems: MenuItem[] = [];
 
-//   constructor(private authService: AuthService) {}
-
-//   ngOnInit(): void {
-//     this.buildMenu();
-//   }
-
-//   private buildMenu(): void {
-//     const user = this.authService.getCurrentUser();
-//     const baseMenu: MenuItem[] = [
-//       {
-//         label: 'Dashboard',
-//         icon: 'pi pi-home',
-//         routerLink: '/dashboard',
-//         routerLinkActiveOptions: { exact: true }
-//       }
-//     ];
-
-//     const roleSpecificItems: MenuItem[] = [];
-
-//     if (user?.role === UserRole.ADMIN || user?.role === UserRole.COUNSELOR) {
-//       roleSpecificItems.push({
-//         label: 'Leads',
-//         icon: 'pi pi-users',
-//         items: [
-//           {
-//             label: 'All Leads',
-//             icon: 'pi pi-list',
-//             routerLink: '/dashboard/leads'
-//           },
-//           {
-//             label: 'Add New Lead',
-//             icon: 'pi pi-plus',
-//             routerLink: '/dashboard/leads/new'
-//           }
-//         ]
-//       });
-//     }
-
-
-    
-//     if (user?.role === UserRole.ADMIN || user?.role === UserRole.TRAINER) {
-//       roleSpecificItems.push({
-//         label: 'Courses',
-//         icon: 'pi pi-book',
-//         items: [
-//           {
-//             label: 'Courses',
-//             icon: 'pi pi-list',
-//             routerLink: '/dashboard/courses'
-//           },
-//           {
-//             label: 'Add New Course',
-//             icon: 'pi pi-plus',
-//             routerLink: '/dashboard/courses/new'
-//           }
-//         ]
-//       });
-//     }
-//     if (user?.role === UserRole.ADMIN || user?.role === UserRole.TRAINER) {
-//       roleSpecificItems.push({
-//         label: 'Enrollments',
-//         icon: 'pi pi-user-plus',
-//         items: [
-//           {
-//             label: 'Enrollments',
-//             icon: 'pi pi-list',
-//             routerLink: '/dashboard/enrollments'
-//           },
-//           {
-//             label: 'Add New Enrollment',
-//             icon: 'pi pi-user-plus',
-//             routerLink: '/dashboard/enrollments/new'
-//           }
-//         ]
-//       });
-//     }
-//     if (user?.role === UserRole.ADMIN || user?.role === UserRole.ACCOUNTANT) {
-//       roleSpecificItems.push({
-//         label: 'Payments',
-//         icon: 'pi pi-credit-card',
-//         routerLink: '/dashboard/payments'
-//       });
-//     }
-
-//     if (user?.role === UserRole.ADMIN) {
-//       roleSpecificItems.push({
-//         label: 'Users',
-//         icon: 'pi pi-user',
-//         routerLink: '/dashboard/users'
-//       });
-//       roleSpecificItems.push({
-//         label: 'Reports',
-//         icon: 'pi pi-chart-bar',
-//         routerLink: '/dashboard/reports'
-//       });
-//     }
-
-//     this.menuItems = [...baseMenu, ...roleSpecificItems];
-//   }
+  onMenuOpen(): void {
+    // Close sidebar on mobile when menu item is clicked
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        this.closeSidebar.emit();
+      }, 200); // Small delay for better UX
+    }
+  }
 }

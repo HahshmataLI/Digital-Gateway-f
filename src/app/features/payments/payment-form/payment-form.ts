@@ -7,6 +7,7 @@ import { Enrollment } from '../../../core/models/enrollment.model';
 import { EnrollmentService } from '../../../core/services/enrollment.service';
 import { PaymentService } from '../../../core/services/payment.service';
 import { SharedModule } from '../../../shared/shared.module';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-payment-form',
@@ -39,7 +40,8 @@ export class PaymentForm  implements OnInit {
     private router: Router,
     private enrollmentService: EnrollmentService,
     private paymentService: PaymentService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) {
     this.paymentForm = this.createForm();
   }
@@ -68,28 +70,33 @@ export class PaymentForm  implements OnInit {
     });
   }
 
-  private loadEnrollment(id: string): void {
-    this.loading = true;
-    this.enrollmentService.getEnrollment(id).subscribe({
-     next: (response) => {
-  if (response.success) {
-    this.enrollment = response.data;
-    this.setupAmountValidator();
-  }
-  this.loading = false;
-},
+private loadEnrollment(id: string): void {
+  this.loading = true;
 
-      error: (error) => {
-        console.error('Error loading enrollment:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load enrollment details'
-        });
-        this.router.navigate(['/dashboard/enrollments']);
+  this.enrollmentService.getEnrollment(id).subscribe({
+    next: (response) => {
+      if (response.success) {
+        this.enrollment = response.data;
+        this.setupAmountValidator();
       }
-    });
-  }
+      this.loading = false;
+      this.cdr.detectChanges();   // 👈 FORCE UI UPDATE
+    },
+    error: (error) => {
+      console.error('Error loading enrollment:', error);
+      this.loading = false;
+      this.cdr.detectChanges();   // 👈 IMPORTANT
+
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load enrollment details'
+      });
+
+      this.router.navigate(['/dashboard/enrollments']);
+    }
+  });
+}
 
   private setupAmountValidator(): void {
     if (this.enrollment) {

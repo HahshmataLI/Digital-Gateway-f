@@ -1,0 +1,30 @@
+:host {
+  display: block;
+  height: 100vh;
+}
+
+/* Smooth transitions for mobile menu */
+.translate-x-0 {
+  transform: translateX(0);
+}
+
+.-translate-x-full {
+  transform: translateX(-100%);
+}
+
+/* Ensure proper scrolling on mobile */
+@media (max-width: 1023px) {
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Fix for panel menu on mobile */
+::ng-deep .p-panelmenu .p-panelmenu-header-link {
+  padding: 0.75rem 1rem !important;
+}
+
+::ng-deep .p-panelmenu .p-menuitem-link {
+  padding: 0.75rem 1rem !important;
+  padding-left: 2rem !important;
+}

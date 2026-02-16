@@ -4,7 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
-
+import { of } from 'rxjs';
+import { ChangeDetectorRef } from '@angular/core';
 import { Course } from '../../../core/models/course.model';
 import { Batch } from '../../../core/models/batch.model';
 import { Lead } from '../../../core/models/lead.model';
@@ -66,7 +67,8 @@ export class EnrollmentForm  implements OnInit {
     private batchService: BatchService,
     private leadService: LeadsService,
     private enrollmentService: EnrollmentService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef 
   ) {
     this.enrollmentForm = this.createForm();
   }
@@ -80,19 +82,22 @@ export class EnrollmentForm  implements OnInit {
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        switchMap(courseId => {
-          if (courseId) {
-            this.selectedCourse = this.courses.find(c => c._id === courseId) || null;
-            this.updateCourseFee();
-            this.loadingBatches = true;
-            return this.batchService.getBatchesByCourse(courseId);
-          }
-          this.selectedCourse = null;
-          this.batches = [];
-          this.batchOptions = [];
-          this.loadingBatches = false;
-          return [];
-        })
+       switchMap(courseId => {
+  if (courseId) {
+    this.selectedCourse = this.courses.find(c => c._id === courseId) || null;
+    this.updateCourseFee();
+    this.loadingBatches = true;
+    return this.batchService.getBatchesByCourse(courseId);
+  }
+
+  this.selectedCourse = null;
+  this.batches = [];
+  this.batchOptions = [];
+  this.loadingBatches = false;
+
+  return of([]);   // ✅ correct observable
+})
+
       )
       .subscribe({
         next: (batches: Batch[]) => {
@@ -147,23 +152,23 @@ export class EnrollmentForm  implements OnInit {
     });
   }
 
-  private checkRouteMode(): void {
-    this.route.params.subscribe(params => {
-      // Check if from lead
-      if (params['leadId']) {
-        this.isFromLead = true;
-        this.leadId = params['leadId'];
-        this.loadLeadData(this.leadId);
-      }
-      
-      // Check if edit mode
-      if (params['id']) {
-        this.isEditMode = true;
-        this.enrollmentId = params['id'];
-        this.loadEnrollmentData(this.enrollmentId);
-      }
-    });
+private checkRouteMode(): void {
+  const id = this.route.snapshot.paramMap.get('id');
+  const leadId = this.route.snapshot.paramMap.get('leadId');
+
+  if (leadId) {
+    this.isFromLead = true;
+    this.leadId = leadId;
+    this.loadLeadData(this.leadId);
   }
+
+  if (id) {
+    this.isEditMode = true;
+    this.enrollmentId = id;
+    this.loadEnrollmentData(this.enrollmentId);
+  }
+}
+
 
   private loadCourses(): void {
     this.loadingCourses = true;
@@ -224,58 +229,77 @@ export class EnrollmentForm  implements OnInit {
     });
   }
 
-  private loadEnrollmentData(enrollmentId: string): void {
-    this.loading = true;
-    this.enrollmentService.getEnrollment(enrollmentId).subscribe({
-      next: (enrollment: Enrollment) => {
-        // Patch form with enrollment data
+ private loadEnrollmentData(enrollmentId: string): void {
+  this.loading = false;
+this.cdr.detectChanges();   // 👈 force refresh
+
+
+  this.enrollmentService.getEnrollment(enrollmentId).subscribe({
+    next: (response: any) => {
+      if (!response.success) return;
+
+      const enrollment: Enrollment = response.data;
+
+    this.enrollmentForm.patchValue({
+  studentName: enrollment.student.name,
+  studentEmail: enrollment.student.email,
+  studentPhone: enrollment.student.phone,
+  studentQualification: enrollment.student.qualification,
+  studentOccupation: enrollment.student.occupation,
+  studentAddress: enrollment.student.address,
+
+  course: typeof enrollment.course === 'object'
+    ? enrollment.course._id
+    : enrollment.course,
+
+  batch: typeof enrollment.batch === 'object'
+    ? enrollment.batch?._id
+    : enrollment.batch,
+
+  discount: enrollment.fees.discount,
+  paidAmount: enrollment.fees.paidAmount,
+
+  notes: enrollment.notes,
+  isActive: enrollment.isActive
+}, { emitEvent: false });   // 👈 👈 👈 THIS IS THE KEY
+
+
+      this.selectedCourse =
+        typeof enrollment.course === 'object'
+          ? enrollment.course
+          : null;
+
+      this.selectedBatch =
+        typeof enrollment.batch === 'object'
+          ? enrollment.batch
+          : null;
+
+      if (this.selectedCourse) {
         this.enrollmentForm.patchValue({
-          // Student Information
-          studentName: enrollment.student.name,
-          studentEmail: enrollment.student.email,
-          studentPhone: enrollment.student.phone,
-          studentQualification: enrollment.student.qualification,
-          studentOccupation: enrollment.student.occupation,
-          studentAddress: enrollment.student.address,
-
-          // Course & Batch
-          course: typeof enrollment.course === 'object' ? enrollment.course._id : enrollment.course,
-          batch: typeof enrollment.batch === 'object' ? enrollment.batch?._id : enrollment.batch,
-
-          // Fee Details
-          discount: enrollment.fees.discount,
-          paidAmount: enrollment.fees.paidAmount,
-          
-          // Additional
-          notes: enrollment.notes,
-          isActive: enrollment.isActive
+          courseFee: this.selectedCourse.fees
         });
-
-        // Set selected course and batch
-        this.selectedCourse = typeof enrollment.course === 'object' ? enrollment.course : null;
-        this.selectedBatch = typeof enrollment.batch === 'object' ? enrollment.batch : null;
-        
-        // Update course fee display
-        if (this.selectedCourse) {
-          this.enrollmentForm.patchValue({
-            courseFee: this.selectedCourse.fees
-          });
-          this.calculateFinalAmount();
-        }
-        
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading enrollment:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load enrollment data'
-        });
-        this.router.navigate(['/dashboard/enrollments']);
+        this.calculateFinalAmount();
       }
-    });
-  }
+
+      this.loading = false;
+      this.cdr.detectChanges();
+
+    },
+    error: (error) => {
+      console.error('Error loading enrollment:', error);
+      this.loading = false;
+
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load enrollment data'
+      });
+
+      this.router.navigate(['/dashboard/enrollments']);
+    }
+  });
+}
+
 
   private updateBatchOptions(): void {
     this.batchOptions = this.batches
@@ -327,6 +351,7 @@ export class EnrollmentForm  implements OnInit {
     const finalAmount = Math.max(0, courseFee - discount);
     
     this.enrollmentForm.patchValue({
+      
       finalAmount: finalAmount
     }, { emitEvent: false });
     
@@ -431,9 +456,13 @@ export class EnrollmentForm  implements OnInit {
         });
 
         // Navigate to the enrollment detail view
-        setTimeout(() => {
-          this.router.navigate(['/dashboard/enrollments', response.data._id]);
-        }, 500);
+       this.submitting = false;
+
+this.router.navigate([
+  '/dashboard/enrollments',
+  response.data._id
+]);
+
       },
       error: (error) => {
         console.error('Error saving enrollment:', error);

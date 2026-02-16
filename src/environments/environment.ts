@@ -1,4 +1,4 @@
 export const environment = {
-  production: false,
-  apiUrl: 'https://digital-gateway-b.onrender.com/api'
+  production: true,
+  apiUrl: 'http://localhost:5000/api'
 };
