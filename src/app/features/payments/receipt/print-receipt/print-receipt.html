@@ -1,0 +1,105 @@
+<div class="receipt-container" id="print-receipt" *ngIf="receipt">
+  <!-- Header -->
+  <div class="receipt-header">
+    <div class="institute-name">DIGITAL GATEWAY</div>
+    <div class="institute-tagline">Training Institute of Excellence</div>
+    <div class="receipt-title">PAYMENT RECEIPT</div>
+  </div>
+
+  <!-- Receipt Info Grid -->
+  <div class="receipt-info">
+    <div class="info-item">
+      <span class="info-label">Receipt Number</span>
+      <span class="info-value">{{ receipt.receiptNumber }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Date</span>
+      <span class="info-value">{{ receipt.date | date:'dd MMM yyyy' }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Payment ID</span>
+      <span class="info-value">{{ receipt.paymentNumber }}</span>
+    </div>
+  </div>
+
+  <!-- Student Details -->
+  <div class="section">
+    <div class="section-title">Student Information</div>
+    <div class="details-grid">
+      <div class="detail-row">
+        <span class="detail-label">Full Name</span>
+        <span class="detail-value">{{ receipt.student.name }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Email Address</span>
+        <span class="detail-value">{{ receipt.student.email }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Phone Number</span>
+        <span class="detail-value">{{ receipt.student.phone }}</span>
+      </div>
+      <div class="detail-row" *ngIf="receipt.student.address">
+        <span class="detail-label">Address</span>
+        <span class="detail-value">{{ receipt.student.address }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Details -->
+  <div class="section">
+    <div class="section-title">Course Details</div>
+    <div class="details-grid">
+      <div class="detail-row">
+        <span class="detail-label">Course Name</span>
+        <span class="detail-value">{{ receipt.course.name }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Course Code</span>
+        <span class="detail-value">{{ receipt.course.code }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Summary -->
+  <div class="payment-summary">
+    <div class="payment-row">
+      <span class="payment-label">Payment Method</span>
+      <span class="payment-total">{{ receipt.paymentMode | titlecase }}</span>
+    </div>
+    <div class="payment-row" *ngIf="receipt.transactionReference">
+      <span class="payment-label">Transaction Reference</span>
+      <span class="payment-total">{{ receipt.transactionReference }}</span>
+    </div>
+    <div class="payment-row">
+      <span class="payment-label">Total Amount Paid</span>
+      <span class="payment-amount">Rs {{ receipt.amount | number }}</span>
+    </div>
+  </div>
+
+  <!-- Amount in Words -->
+  <div class="amount-words">
+    <div class="words-label">Amount in Words</div>
+    <div class="words-value">{{ receipt.amountInWords }}</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="receipt-footer">
+    <div class="footer-note">This is a computer generated receipt. No signature required.</div>
+    <div class="generated-date">Generated on: {{ receipt.timestamp | date:'dd MMM yyyy, hh:mm a' }}</div>
+    
+    <!-- Signatures -->
+    <div class="signatures">
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <div class="signature-label">Authorized Signatory</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <div class="signature-label">Student Signature</div>
+      </div>
+    </div>
+    
+    <!-- Thank You -->
+    <div class="thank-you">Thank you for choosing Digital Gateway for your education journey!</div>
+  </div>
+</div>

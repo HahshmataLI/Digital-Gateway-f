@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ChangeDetectorRef } from '@angular/core';
 
 import { Payment } from '../../../core/models/payment.model';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -22,6 +23,7 @@ export class PaymentDetail  implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private cdr: ChangeDetectorRef,
     private paymentService: PaymentService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService
@@ -42,6 +44,7 @@ export class PaymentDetail  implements OnInit {
       next: (payment) => {
         this.payment = payment;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading payment:', error);

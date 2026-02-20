@@ -1,14 +1,205 @@
+/* Print Styles */
 @media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  body {
+    background: white;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
   .no-print {
     display: none !important;
   }
-  
-  body {
-    background: white;
+}
+
+/* Receipt Container */
+.receipt-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+  background: white;
+  font-family: 'Courier New', Courier, monospace;
+  border: 1px dashed #ccc;
+}
+
+/* Header */
+.receipt-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #333;
+}
+
+.institute-name {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+.institute-tagline {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.receipt-title {
+  font-size: 20px;
+  font-weight: bold;
+  background: #f0f0f0;
+  display: inline-block;
+  padding: 5px 20px;
+  margin-top: 10px;
+}
+
+/* Receipt Info */
+.receipt-info {
+  margin-bottom: 25px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  background: #f9f9f9;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dotted #ccc;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  font-weight: bold;
+  width: 120px;
+}
+
+.info-row .value {
+  flex: 1;
+  text-align: right;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 25px;
+}
+
+.section-title {
+  font-weight: bold;
+  font-size: 16px;
+  background: #333;
+  color: white;
+  padding: 5px 10px;
+  margin-bottom: 15px;
+}
+
+/* Tables */
+.details-table, .payment-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.details-table td, .payment-table td {
+  padding: 8px 5px;
+  border-bottom: 1px dotted #ccc;
+}
+
+.details-table .label, .payment-table .label {
+  font-weight: bold;
+  width: 120px;
+}
+
+.details-table .value, .payment-table .value {
+  text-align: left;
+}
+
+.payment-table .amount {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+/* Amount in Words */
+.amount-words {
+  margin: 25px 0;
+  padding: 15px;
+  background: #f5f5f5;
+  border-left: 4px solid #333;
+  font-style: italic;
+}
+
+.amount-words .label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.amount-words .value {
+  font-size: 16px;
+}
+
+/* Footer */
+.receipt-footer {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.generated-on {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 30px;
+}
+
+.signatures {
+  display: flex;
+  justify-content: space-around;
+  margin: 40px 0 20px;
+}
+
+.signature-line {
+  text-align: center;
+  width: 200px;
+}
+
+.line {
+  border-top: 1px solid #333;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+.signature-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.thank-you {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 30px;
+  color: #333;
+}
+
+/* Hide on screen */
+@media screen {
+  .receipt-container {
+    display: none;
   }
-  
-  #receipt-content {
-    box-shadow: none;
-    padding: 0;
+}
+
+/* Show in print */
+@media print {
+  .receipt-container {
+    display: block !important;
   }
 }
